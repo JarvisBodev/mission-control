@@ -109,7 +109,7 @@ export default function MissionControl() {
 
           <div className="space-y-1">
              <span className="px-3 text-[10px] font-black uppercase tracking-widest text-zinc-700 mb-2 block">Personal</span>
-             <SidebarItem icon={User} label="Life" active={activeTab === 'Personal'} onClick={() => {setActiveTab('Personal'); setSelectedFile(null);}} />
+             <SidebarItem icon={User} label="Pessoal" active={activeTab === 'Personal'} onClick={() => {setActiveTab('Personal'); setSelectedFile(null);}} />
           </div>
 
           <div className="space-y-1">
@@ -119,7 +119,7 @@ export default function MissionControl() {
 
           <div className="space-y-1">
              <span className="px-3 text-[10px] font-black uppercase tracking-widest text-zinc-700 mb-2 block">Projects</span>
-             <SidebarItem icon={Briefcase} label="Progress" active={activeTab === 'Projects'} onClick={() => {setActiveTab('Projects'); setSelectedFile(null);}} />
+             <SidebarItem icon={Briefcase} label="Projetos" active={activeTab === 'Projects'} onClick={() => {setActiveTab('Projects'); setSelectedFile(null);}} />
           </div>
 
           <div className="mt-auto pt-6 border-t border-white/5">
