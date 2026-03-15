@@ -1,4 +1,5 @@
-// Dashboard Mission Control v1.1 Sun Mar 15 17:04:45 UTC 2026'use client';
+
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { 
