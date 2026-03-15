@@ -1,3 +1,4 @@
+// Dashboard Mission Control - Redeploy fix for Vercel cache issue
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";

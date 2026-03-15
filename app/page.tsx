@@ -51,7 +51,6 @@ const SectionCard = ({ label, value, unit, icon: Icon, color, onClick }: any) =>
 export default function MissionControl() {
   // Navigation State
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [mounted, setMounted] = useState(false);
 
   // Data State
   const [tasks, setTasks] = useState<any[]>([]);
@@ -63,7 +62,6 @@ export default function MissionControl() {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
-    setMounted(true);
     refreshData();
   }, []);
 
@@ -81,8 +79,6 @@ export default function MissionControl() {
       setFiles(f.files || []);
     } catch (e) { console.error("Data fetch error", e); }
   };
-
-  if (!mounted) return <div className="bg-black h-screen w-full" />;
 
   const filipeTasks = tasks.filter(t => t.owner !== 'jarvis');
   const jarvisTasks = tasks.filter(t => t.owner === 'jarvis');
