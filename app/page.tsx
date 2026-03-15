@@ -90,7 +90,7 @@ export default function MissionControl() {
       <aside className="w-64 border-r border-white/5 flex flex-col p-4 gap-6 bg-black/20 backdrop-blur-2xl shrink-0 overflow-y-auto">
         <div className="flex items-center gap-2 px-3 mb-4">
           <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-2xl shadow-blue-500/40"><Zap size={18} className="text-white" /></div>
-          <div className="flex flex-col"><span className="font-bold text-sm tracking-widest uppercase italic">Jarvis</span><span className="text-[10px] text-emerald-500 font-mono">v5.0 OPERATIONAL</span></div>
+          <div className="flex flex-col"><span className="font-bold text-sm tracking-widest uppercase italic">Jarvis</span><span className="text-[10px] text-emerald-500 font-mono">v2.0 LIVE BUILD</span></div>
         </div>
         
         <nav className="flex flex-col gap-6">

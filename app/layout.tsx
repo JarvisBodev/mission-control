@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mission Control Dashboard",
+  title: "Mission Control v2.0",
   description: "Personal dashboard for Filipe - BINB, Personal, Jarvis, Projects",
 };
 
