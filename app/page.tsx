@@ -107,7 +107,7 @@ export default function MissionControl() {
           </div>
 
           <div className="space-y-1">
-             <span className="px-3 text-[10px] font-black uppercase tracking-widest text-zinc-700 mb-2 block">Personal</span>
+             <span className="px-3 text-[10px] font-black uppercase tracking-widest text-zinc-700 mb-2 block">Pessoal</span>
              <SidebarItem icon={User} label="Pessoal" active={activeTab === 'Personal'} onClick={() => {setActiveTab('Personal'); setSelectedFile(null);}} />
           </div>
 

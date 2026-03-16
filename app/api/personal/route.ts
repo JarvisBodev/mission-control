@@ -87,6 +87,7 @@ export async function GET() {
       latestPR: 'Sem dados de ginásio',
       muscleGroup: 'Desconhecido',
       workoutDetails: '',
+      recentWorkouts: [] as Array<{date: string, muscleGroup: string, details: string}>,
       hasData: false,
     };
 
@@ -97,15 +98,16 @@ export async function GET() {
         // Local development: read from file
         const gymContent = fs.readFileSync(GYM_PROGRESS_PATH, 'utf-8');
         
-        // Parse last workout date from table
+        // Parse last workout date from table and recent workouts
         const tableLines = gymContent.split('\n').filter(line => line.includes('|'));
         let lastWorkoutDate = null;
         let lastWorkoutDetails = '';
         let muscleGroup = 'Desconhecido';
+        const recentWorkouts = [];
         
         if (tableLines.length > 1) {
           const headers = tableLines[0].split('|').map(h => h.trim());
-          for (let i = 1; i < Math.min(tableLines.length, 6); i++) {
+          for (let i = 1; i < tableLines.length; i++) {
             const cells = tableLines[i].split('|').map(c => c.trim());
             if (cells.length >= 4) {
               const date = cells[1];
@@ -113,10 +115,19 @@ export async function GET() {
               const details = cells[3];
               
               if (date && date.includes('2026-03')) {
-                lastWorkoutDate = date.trim();
-                muscleGroup = group || 'Desconhecido';
-                lastWorkoutDetails = details || '';
-                break;
+                if (!lastWorkoutDate) {
+                  lastWorkoutDate = date.trim();
+                  muscleGroup = group || 'Desconhecido';
+                  lastWorkoutDetails = details || '';
+                }
+                // Add to recent workouts (max 5)
+                if (recentWorkouts.length < 5) {
+                  recentWorkouts.push({
+                    date: date.trim(),
+                    muscleGroup: group || 'Desconhecido',
+                    details: details || '',
+                  });
+                }
               }
             }
           }
@@ -135,6 +146,7 @@ export async function GET() {
           latestPR,
           muscleGroup,
           workoutDetails: lastWorkoutDetails,
+          recentWorkouts,
           hasData: true,
         };
       } else {
@@ -145,6 +157,13 @@ export async function GET() {
           latestPR: 'Deltóide posterior halteres 4x10x10kg',
           muscleGroup: 'Ombros',
           workoutDetails: 'Deltóide posterior halteres + Elevação unilateral + Supersérie elevação lateral',
+          recentWorkouts: [
+            { date: '2026-03-13', muscleGroup: 'Ombros', details: 'Deltóide posterior halteres + Elevação unilateral + Supersérie elevação lateral' },
+            { date: '2026-03-12', muscleGroup: 'Pernas', details: 'PR Belt Squat 60kg/lado' },
+            { date: '2026-03-10', muscleGroup: 'Costas & Bíceps', details: 'PR Pulley Aberto 59kg' },
+            { date: '2026-03-09', muscleGroup: 'Peito', details: 'Volume Day' },
+            { date: '2026-03-07', muscleGroup: 'Peito', details: 'Dropsets (Smith)' },
+          ],
           hasData: true,
         };
       }
@@ -157,6 +176,11 @@ export async function GET() {
         latestPR: 'Deltóide posterior halteres 4x10x10kg',
         muscleGroup: 'Ombros',
         workoutDetails: 'Treino de ombros completo',
+        recentWorkouts: [
+          { date: '2026-03-13', muscleGroup: 'Ombros', details: 'Treino de ombros completo' },
+          { date: '2026-03-12', muscleGroup: 'Pernas', details: 'Belt Squat 60kg/lado' },
+          { date: '2026-03-10', muscleGroup: 'Costas & Bíceps', details: 'Pulley Aberto 59kg' },
+        ],
         hasData: true,
       };
     }
