@@ -54,7 +54,7 @@ const SectionCard = ({ label, value, unit, icon: Icon, color, onClick }: any) =>
 const GymSection = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [expandedWorkout, setExpandedWorkout] = useState<number | null>(null);
+  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<number>>(new Set([0])); // Primeiro aberto por default
 
   useEffect(() => {
     fetch('/api/gym/workouts')
@@ -69,6 +69,16 @@ const GymSection = () => {
       });
   }, []);
 
+  const toggleWorkout = (idx: number) => {
+    const newExpanded = new Set(expandedWorkouts);
+    if (newExpanded.has(idx)) {
+      newExpanded.delete(idx);
+    } else {
+      newExpanded.add(idx);
+    }
+    setExpandedWorkouts(newExpanded);
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -78,16 +88,26 @@ const GymSection = () => {
     );
   }
 
+  // Get current month name for display
+  const currentMonth = "Março";
+  const nextMonth = "Abril";
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Ginásio</h2>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="text-zinc-400">
-            <span className="text-emerald-500 font-bold">{data?.stats?.marchWorkouts || 0}</span> treinos em Março
+        <div className="flex items-center gap-4">
+          <div className="text-sm">
+            <span className="text-zinc-400">Mês atual: </span>
+            <span className="font-bold text-blue-400">{currentMonth}</span>
           </div>
-          <div className="text-zinc-400">
-            <span className="text-purple-500 font-bold">{data?.stats?.prCount || 0}</span> PRs
+          <div className="flex items-center gap-4 text-sm">
+            <div className="text-zinc-400">
+              <span className="text-emerald-500 font-bold">{data?.stats?.marchWorkouts || 0}</span> treinos
+            </div>
+            <div className="text-zinc-400">
+              <span className="text-purple-500 font-bold">{data?.stats?.prCount || 0}</span> PRs
+            </div>
           </div>
         </div>
       </div>
@@ -95,38 +115,49 @@ const GymSection = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <SectionCard 
-          label="Frequência (Março)" 
+          label="Frequência" 
           value={data?.stats?.frequency || 'N/D'} 
-          unit="" 
+          unit={`em ${currentMonth}`}
           icon={Activity} 
           color="text-emerald-500" 
         />
         <SectionCard 
           label="Último Treino" 
           value={data?.stats?.lastWorkout?.split('-')[2] || 'N/D'} 
-          unit="Mar" 
+          unit={currentMonth}
           icon={Dumbbell} 
           color="text-blue-500" 
         />
         <SectionCard 
-          label="Volume (Março)" 
+          label="Volume Total" 
           value={data?.stats?.totalSets || 0} 
-          unit="sets" 
+          unit={`sets (${currentMonth})`}
           icon={BarChart3} 
           color="text-purple-500" 
         />
         <SectionCard 
-          label="PRs (Março)" 
+          label="Personal Records" 
           value={data?.stats?.prCount || 0} 
-          unit="recordes" 
+          unit={`PRs (${currentMonth})`}
           icon={TrendingUp} 
           color="text-orange-500" 
         />
       </div>
 
-      {/* Workouts List with Accordion */}
+      {/* Monthly Info */}
       <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-        <h3 className="text-xl font-semibold text-zinc-300 mb-6">Histórico de Treinos (Março)</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-zinc-300">Histórico de Treinos</h3>
+          <div className="text-sm text-zinc-500">
+            <span className="text-blue-400 font-bold">{currentMonth}</span> • Próximo mês: {nextMonth}
+          </div>
+        </div>
+        <p className="text-zinc-400 text-sm mb-6">
+          Os dados são sincronizados automaticamente do Discord Iron. Quando entrarmos em {nextMonth}, 
+          esta secção mostrará automaticamente os treinos do novo mês, mantendo o histórico completo.
+        </p>
+        
+        {/* Workouts List with Multi Accordion */}
         <div className="space-y-3">
           {data?.workouts?.map((workout: any, idx: number) => (
             <div 
@@ -136,33 +167,39 @@ const GymSection = () => {
               {/* Header */}
               <div 
                 className="p-4 cursor-pointer flex items-center justify-between"
-                onClick={() => setExpandedWorkout(expandedWorkout === idx ? null : idx)}
+                onClick={() => toggleWorkout(idx)}
               >
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-bold text-zinc-300">{workout.date}</div>
                   <div className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                     {workout.muscleGroup}
                   </div>
+                  {workout.prNote && (
+                    <div className="px-3 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                      🏆 PR
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-xs text-zinc-500">{workout.exercises?.length || 0} exercícios</div>
                   <ChevronDown 
                     size={18} 
-                    className={`text-zinc-500 transition-transform ${expandedWorkout === idx ? 'rotate-180' : ''}`} 
+                    className={`text-zinc-500 transition-transform ${expandedWorkouts.has(idx) ? 'rotate-180' : ''}`} 
                   />
                 </div>
               </div>
 
-              {/* PR Note */}
-              {workout.prNote && (
-                <div className="px-4 pb-2">
-                  <div className="text-xs font-bold text-orange-400">{workout.prNote}</div>
-                </div>
-              )}
-
               {/* Expanded Details */}
-              {expandedWorkout === idx && (
+              {expandedWorkouts.has(idx) && (
                 <div className="px-4 pb-4 pt-2 border-t border-white/5">
+                  {/* PR Note */}
+                  {workout.prNote && (
+                    <div className="mb-4 p-3 bg-orange-500/5 border border-orange-500/20 rounded-lg">
+                      <div className="text-xs font-bold text-orange-400">{workout.prNote}</div>
+                    </div>
+                  )}
+                  
+                  {/* Exercises */}
                   <div className="space-y-4">
                     {workout.exercises?.map((ex: any, i: number) => (
                       <div key={i} className="space-y-2">
@@ -181,6 +218,31 @@ const GymSection = () => {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Next Month Info */}
+      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+        <h3 className="text-xl font-semibold text-zinc-300 mb-3">Pronto para {nextMonth}?</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-emerald-400">📊 Dados Automáticos</div>
+            <p className="text-sm text-zinc-400">
+              Quando começares a publicar treinos em {nextMonth}, a secção atualizará automaticamente. O histórico de {currentMonth} ficará arquivado.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-blue-400">🔄 Sincronização Contínua</div>
+            <p className="text-sm text-zinc-400">
+              Cada mensagem que publicares no canal Discord Iron será parseada e adicionada aqui em tempo real.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-purple-400">📈 Progresso Mensal</div>
+            <p className="text-sm text-zinc-400">
+              As estatísticas serão recalculadas para {nextMonth}, mantendo o histórico completo para análise de tendências.
+            </p>
+          </div>
         </div>
       </div>
     </div>
