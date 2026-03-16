@@ -16,6 +16,8 @@ interface PersonalData {
     lastWorkoutDate: string | null;
     marchWorkouts: number;
     latestPR: string;
+    muscleGroup: string;
+    workoutDetails: string;
     hasData: boolean;
   };
   calendar: {
@@ -297,17 +299,23 @@ export default function PersonalSection() {
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Workouts (Mar)</span>
-                <span className="text-zinc-300">{data.gymProgress.marchWorkouts}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Latest PR</span>
-                <span className="text-zinc-300 truncate">{data.gymProgress.latestPR}</span>
-              </div>
-              <div className="flex items-center justify-between">
                 <span className="text-zinc-400">Last workout</span>
                 <span className="text-zinc-300">{data.gymProgress.lastWorkoutDate || 'Not recorded'}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-400">Muscle Group</span>
+                <span className="text-zinc-300">{data.gymProgress.muscleGroup}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-400">Workouts (Mar)</span>
+                <span className="text-zinc-300">{data.gymProgress.marchWorkouts}</span>
+              </div>
+              {data.gymProgress.workoutDetails && (
+                <div className="mt-2 pt-2 border-t border-white/5">
+                  <p className="text-xs text-zinc-400">Last session:</p>
+                  <p className="text-xs text-zinc-300 truncate">{data.gymProgress.workoutDetails}</p>
+                </div>
+              )}
             </div>
           </div>
           
