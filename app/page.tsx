@@ -8,7 +8,7 @@ import {
   Calendar as CalendarIcon, Clock, Trash2, CheckCircle2, Circle,
   Terminal, RefreshCw, HardDrive, ChevronLeft, Bot, User, Target,
   TrendingUp, Home, Building2, Heart, Search, Hammer, Calculator, Plane, Eraser,
-  BarChart3, ChevronDown, PieChart, Power, Dumbbell
+  BarChart3, ChevronDown, PieChart, Power, Dumbbell, Bell, AlertTriangle, Flag, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalendarEvents from '@/components/ui/CalendarEvents';
@@ -249,14 +249,78 @@ const GymSection = () => {
   );
 };
 
-const CalendarSection = () => (
-  <div className="max-w-7xl mx-auto space-y-8">
-    <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Calendário</h2>
-    <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-      <p className="text-zinc-500">Integração com Google Calendar em desenvolvimento.</p>
+const CalendarSection = () => {
+  // Events for tomorrow (2026-03-17)
+  const tomorrowEvents = [
+    { time: '7:00', title: 'Ginásio', description: 'Treino matinal' },
+    { time: '9:00', title: 'Lourenço colégio', description: 'Levar ao colégio' },
+    { time: '10:00', title: 'Perfilago', description: 'Reunião/Visita' },
+    { time: '11:00', title: 'Viana', description: 'Compromisso em Viana' },
+    { time: '16:30', title: 'Lourenço colégio', description: 'Buscar do colégio' },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Calendário</h2>
+        <div className="text-sm text-zinc-400">
+          <span className="text-blue-400 font-bold">17 de Março 2026</span> • Amanhã
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Tomorrow's Schedule */}
+        <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+          <h3 className="text-xl font-semibold text-zinc-300 mb-4 flex items-center gap-2">
+            <CalendarIcon size={18} className="text-blue-500" />
+            Agenda de Amanhã
+          </h3>
+          <div className="space-y-3">
+            {tomorrowEvents.map((event, idx) => (
+              <div 
+                key={idx}
+                className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 hover:border-white/10 transition-all"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-sm font-bold text-zinc-300">{event.time}</div>
+                  <div className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    {event.title}
+                  </div>
+                </div>
+                <div className="text-sm text-zinc-400">{event.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Calendar Integration Info */}
+        <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+          <h3 className="text-xl font-semibold text-zinc-300 mb-4 flex items-center gap-2">
+            <RefreshCw size={18} className="text-emerald-500" />
+            Próximos Passos
+          </h3>
+          <p className="text-zinc-400 mb-4">
+            Integração com Google Calendar em desenvolvimento. Eventos serão sincronizados automaticamente.
+          </p>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2 text-zinc-500">
+              <CheckCircle size={14} className="text-emerald-500" />
+              <span>Eventos manuais já suportados</span>
+            </div>
+            <div className="flex items-center gap-2 text-zinc-500">
+              <Clock size={14} className="text-blue-500" />
+              <span>Sincronização automática em desenvolvimento</span>
+            </div>
+            <div className="flex items-center gap-2 text-zinc-500">
+              <Bell size={14} className="text-orange-500" />
+              <span>Notificações por push planeadas</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const FamilySection = () => (
   <div className="max-w-7xl mx-auto space-y-8">
@@ -267,10 +331,82 @@ const FamilySection = () => (
   </div>
 );
 
+const BinbRemindersSection = () => {
+  const reminders = [
+    { id: 1, title: 'Máquina de lavar', code: '223', description: 'Verificar/Reparar máquina de lavar' },
+    { id: 2, title: 'Comprar e entregar fritadeiras', code: '43', description: 'Aquisição e entrega de fritadeiras' },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">BINB - Lembretes</h2>
+        <div className="text-sm text-zinc-400">
+          <span className="text-blue-400 font-bold">{reminders.length}</span> lembretes ativos
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SectionCard 
+          label="Lembretes Pendentes" 
+          value={reminders.length} 
+          unit="itens" 
+          icon={Bell} 
+          color="text-blue-500" 
+        />
+        <SectionCard 
+          label="Prioridade" 
+          value="Média" 
+          unit="" 
+          icon={AlertTriangle} 
+          color="text-orange-500" 
+        />
+      </div>
+
+      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+        <h3 className="text-xl font-semibold text-zinc-300 mb-6">Lista de Lembretes</h3>
+        <div className="space-y-4">
+          {reminders.map((reminder) => (
+            <div 
+              key={reminder.id}
+              className="bg-zinc-900/40 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="text-lg font-bold text-zinc-300">{reminder.title}</div>
+                  <div className="text-sm text-zinc-500 mt-1">{reminder.description}</div>
+                </div>
+                <div className="px-4 py-2 rounded-full text-sm font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  Código {reminder.code}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <CalendarIcon size={14} />
+                  <span>Adicionado hoje</span>
+                </div>
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <User size={14} />
+                  <span>Responsável: Filipe</span>
+                </div>
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <Flag size={14} />
+                  <span>Status: Pendente</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function MissionControl() {
   // Navigation State
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [expandedPersonal, setExpandedPersonal] = useState(false);
+  const [expandedBinb, setExpandedBinb] = useState(false);
 
   // Data State
   const [tasks, setTasks] = useState<any[]>([]);
@@ -327,7 +463,39 @@ export default function MissionControl() {
 
           <div className="space-y-1">
              <span className="px-3 text-[10px] font-black uppercase tracking-widest text-zinc-700 mb-2 block">Business</span>
-             <SidebarItem icon={Building2} label="BINB" active={activeTab === 'BINB'} onClick={() => {setActiveTab('BINB'); setSelectedFile(null);}} />
+             <SidebarItem 
+               icon={Building2} 
+               label="BINB" 
+               active={activeTab.startsWith('BINB')}
+               expanded={expandedBinb}
+               hasSubmenu={true}
+               onClick={() => {
+                 if (expandedBinb && activeTab !== 'BINB') {
+                   // Colapsar: voltar para BINB
+                   setActiveTab('BINB');
+                   setExpandedBinb(false);
+                 } else if (!expandedBinb) {
+                   // Expandir e ir para BINB
+                   setActiveTab('BINB');
+                   setExpandedBinb(true);
+                 } else {
+                   // Já está em BINB: só toggle
+                   setExpandedBinb(!expandedBinb);
+                 }
+                 setSelectedFile(null);
+               }}
+             />
+             
+             {expandedBinb && (
+               <div className="ml-4 pl-2 border-l border-white/5 space-y-1 mt-1">
+                 <SidebarItem 
+                   icon={Bell} 
+                   label="Lembretes" 
+                   active={activeTab === 'BINB/Reminders'} 
+                   onClick={() => {setActiveTab('BINB/Reminders'); setSelectedFile(null);}}
+                 />
+               </div>
+             )}
           </div>
 
           <div className="space-y-1">
@@ -402,6 +570,8 @@ export default function MissionControl() {
              <ShieldCheck className="text-emerald-500" size={18} />
              <h1 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-400">
                {selectedFile ? "DOCUMENT VIEW" : 
+                activeTab === 'BINB' ? 'BINB - Asset Management' :
+                activeTab === 'BINB/Reminders' ? 'BINB - Lembretes' :
                 activeTab === 'Personal' ? 'Pessoal' : 
                 activeTab === 'Personal/Gym' ? 'Ginásio' :
                 activeTab === 'Personal/Calendar' ? 'Calendário' :
@@ -439,6 +609,8 @@ export default function MissionControl() {
                     <p className="text-zinc-400">Integration with Google Sheets for real-time apartment data, rent tracking, and contract management.</p>
                  </div>
               </div>
+            ) : activeTab === 'BINB/Reminders' ? (
+              <BinbRemindersSection />
             ) : activeTab === 'Personal' ? (
               <PersonalSection />
             ) : activeTab === 'Personal/Gym' ? (
