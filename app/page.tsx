@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalendarEvents from '../components/ui/CalendarEvents';
+import JarvisSection from '../components/sections/JarvisSection';
+import PersonalSection from '../components/sections/PersonalSection';
 
 // --- TYPES ---
 interface SidebarItemProps {
@@ -90,7 +92,7 @@ export default function MissionControl() {
       <aside className="w-64 border-r border-white/5 flex flex-col p-4 gap-6 bg-black/20 backdrop-blur-2xl shrink-0 overflow-y-auto">
         <div className="flex items-center gap-2 px-3 mb-4">
           <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-2xl shadow-blue-500/40"><Zap size={18} className="text-white" /></div>
-          <div className="flex flex-col"><span className="font-bold text-sm tracking-widest uppercase italic">Jarvis</span><span className="text-[10px] text-emerald-500 font-mono">v2.0 LIVE BUILD</span></div>
+          <div className="flex flex-col"><span className="font-bold text-sm tracking-widest uppercase italic">Jarvis</span><span className="text-[10px] text-emerald-500 font-mono">v5.0 OPERATIONAL</span></div>
         </div>
         
         <nav className="flex flex-col gap-6">
@@ -161,91 +163,9 @@ export default function MissionControl() {
                  </div>
               </div>
             ) : activeTab === 'Personal' ? (
-              <div className="max-w-7xl mx-auto space-y-8">
-                 <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Personal Dashboard</h2>
-                 
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                   {/* Left column: Calendar Events */}
-                   <div className="lg:col-span-2">
-                     <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-                       <CalendarEvents />
-                     </div>
-                   </div>
-                   
-                   {/* Right column: Summary Cards */}
-                   <div className="space-y-6">
-                     <div className="grid grid-cols-2 gap-4">
-                       <SectionCard 
-                         label="Next Event" 
-                         value="Today" 
-                         unit="14:30" 
-                         icon={CalendarIcon} 
-                         color="text-blue-500" 
-                         onClick={() => {/* TODO: Scroll to events */}}
-                       />
-                       <SectionCard 
-                         label="Last Workout" 
-                         value="Pernas" 
-                         unit="12/03" 
-                         icon={Activity} 
-                         color="text-emerald-500"
-                       />
-                     </div>
-                     
-                     <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-5">
-                       <h3 className="font-semibold text-zinc-300 mb-3 flex items-center gap-2">
-                         <Heart size={16} className="text-orange-500" />
-                         Family Routines
-                       </h3>
-                       <div className="space-y-3">
-                         <div className="flex items-center justify-between text-sm">
-                           <span className="text-zinc-400">Lourenço</span>
-                           <span className="text-zinc-300">09:00-16:45</span>
-                         </div>
-                         <div className="flex items-center justify-between text-sm">
-                           <span className="text-zinc-400">Bia (Treino)</span>
-                           <span className="text-zinc-300">Qua 13:45</span>
-                         </div>
-                         <div className="flex items-center justify-between text-sm">
-                           <span className="text-zinc-400">Bia (Massagem)</span>
-                           <span className="text-zinc-300">Qua 11:30</span>
-                         </div>
-                       </div>
-                     </div>
-                     
-                     <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-5">
-                       <h3 className="font-semibold text-zinc-300 mb-3">Quick Stats</h3>
-                       <div className="space-y-2 text-sm">
-                         <div className="flex items-center justify-between">
-                           <span className="text-zinc-400">Events this week</span>
-                           <span className="text-zinc-300">5</span>
-                         </div>
-                         <div className="flex items-center justify-between">
-                           <span className="text-zinc-400">Workouts (Mar)</span>
-                           <span className="text-zinc-300">8</span>
-                         </div>
-                         <div className="flex items-center justify-between">
-                           <span className="text-zinc-400">Family tasks</span>
-                           <span className="text-zinc-300">3 pending</span>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-              </div>
+              <PersonalSection />
             ) : activeTab === 'Jarvis' ? (
-              <div className="max-w-6xl mx-auto space-y-8">
-                 <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Jarvis System Status</h2>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <SectionCard label="Gateway" value="Online" unit="" icon={ShieldCheck} color="text-emerald-500" />
-                    <SectionCard label="Tokens Today" value="842" unit="tokens" icon={Zap} color="text-blue-500" />
-                    <SectionCard label="Active Sessions" value="1" unit="session" icon={Terminal} color="text-orange-500" />
-                 </div>
-                 <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-3xl">
-                    <h3 className="text-xl font-semibold mb-4">Coming Soon</h3>
-                    <p className="text-zinc-400">Real-time monitoring of Clawdbot Gateway, token usage analytics, and system health metrics.</p>
-                 </div>
-              </div>
+              <JarvisSection />
             ) : activeTab === 'Projects' ? (
               <div className="max-w-6xl mx-auto space-y-8">
                  <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Projects & Agents</h2>

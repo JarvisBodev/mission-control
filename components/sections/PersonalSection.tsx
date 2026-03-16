@@ -1,7 +1,9 @@
 'use client';
 
+'use client';
+
 import { useState, useEffect } from 'react';
-import { CalendarIcon, Clock, Heart, Activity, CheckCircle, XCircle, RefreshCw, Users, TrendingUp, MapPin } from 'lucide-react';
+import { CalendarIcon, Clock, Heart, Activity, CheckCircle, XCircle, RefreshCw, Users, TrendingUp, MapPin, Dumbbell } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PersonalData {

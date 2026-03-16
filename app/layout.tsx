@@ -1,4 +1,3 @@
-// Dashboard Mission Control - Redeploy fix for Vercel cache issue
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -8,7 +7,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mission Control v2.0",
+  title: "Mission Control Dashboard",
   description: "Personal dashboard for Filipe - BINB, Personal, Jarvis, Projects",
 };
 
