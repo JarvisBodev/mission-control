@@ -319,10 +319,10 @@ export default function PersonalSection() {
               )}
             </div>
             
-            {data.gymProgress.recentWorkouts && data.gymProgress.recentWorkouts.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-white/5">
-                <h4 className="text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider">Treinos Recentes</h4>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div className="mt-4 pt-4 border-t border-white/5">
+              <h4 className="text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider">Treinos Recentes</h4>
+              {data.gymProgress.recentWorkouts && data.gymProgress.recentWorkouts.length > 0 ? (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                   {data.gymProgress.recentWorkouts.map((workout, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-zinc-900/30 hover:bg-zinc-900/50">
                       <div className="text-xs font-medium text-zinc-300 w-20">{workout.date.split('-')[2]}/{workout.date.split('-')[1]}</div>
@@ -331,8 +331,12 @@ export default function PersonalSection() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-xs text-zinc-500">Nenhum treino registado recentemente.</p>
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-5">

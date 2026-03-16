@@ -132,7 +132,13 @@ export default function MissionControl() {
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-black/40 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-3">
              <ShieldCheck className="text-emerald-500" size={18} />
-             <h1 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-400">{selectedFile ? "DOCUMENT VIEW" : activeTab}</h1>
+             <h1 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-400">
+               {selectedFile ? "DOCUMENT VIEW" : 
+                activeTab === 'Personal' ? 'Pessoal' : 
+                activeTab === 'Projects' ? 'Projetos' :
+                activeTab === 'Settings' ? 'Definições' :
+                activeTab}
+             </h1>
           </div>
           <div onClick={refreshData} className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg cursor-pointer hover:bg-blue-500/20 text-blue-500"><RefreshCw size={14} /></div>
         </header>
