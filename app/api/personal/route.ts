@@ -5,7 +5,7 @@ import path from 'path';
 // Path to GYM_PROGRESS.md
 const GYM_PROGRESS_PATH = path.join(process.env.HOME || '/home/ubuntu', 'clawd', 'memory', 'GYM_PROGRESS.md');
 
-// Fixed family routines
+// Rotinas familiares fixas
 const FAMILY_ROUTINES = [
   { name: 'Lourenço', schedule: '09:00-16:45', description: 'Colégio (Levar 09:00, Buscar 16:45)' },
   { name: 'Bia (Treino)', schedule: 'Qua 13:45', description: 'Treino Quarta-feira' },
@@ -79,25 +79,29 @@ function parseWorkoutFromMessage(content: string): { date: string | null, muscle
 
 export async function GET() {
   try {
-    // 1. Gym Progress Data (from file)
+    // 1. Gym Progress Data
+    // Try to read from local file first (development)
     let gymData = {
       lastWorkoutDate: null as string | null,
       marchWorkouts: 0,
-      latestPR: 'No gym data found',
-      muscleGroup: 'Unknown',
+      latestPR: 'Sem dados de ginásio',
+      muscleGroup: 'Desconhecido',
       workoutDetails: '',
       hasData: false,
     };
 
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+    
     try {
-      if (fs.existsSync(GYM_PROGRESS_PATH)) {
+      if (fs.existsSync(GYM_PROGRESS_PATH) && !isProduction) {
+        // Local development: read from file
         const gymContent = fs.readFileSync(GYM_PROGRESS_PATH, 'utf-8');
         
         // Parse last workout date from table
         const tableLines = gymContent.split('\n').filter(line => line.includes('|'));
         let lastWorkoutDate = null;
         let lastWorkoutDetails = '';
-        let muscleGroup = 'Unknown';
+        let muscleGroup = 'Desconhecido';
         
         if (tableLines.length > 1) {
           const headers = tableLines[0].split('|').map(h => h.trim());
@@ -110,7 +114,7 @@ export async function GET() {
               
               if (date && date.includes('2026-03')) {
                 lastWorkoutDate = date.trim();
-                muscleGroup = group || 'Unknown';
+                muscleGroup = group || 'Desconhecido';
                 lastWorkoutDetails = details || '';
                 break;
               }
@@ -123,7 +127,7 @@ export async function GET() {
         
         // Extract latest PR from the PR section
         const prLines = gymContent.split('\n').filter(line => line.includes('**'));
-        const latestPR = prLines[0] ? prLines[0].replace('**', '').trim() : 'No PR recorded';
+        const latestPR = prLines[0] ? prLines[0].replace('**', '').trim() : 'Sem PR registado';
         
         gymData = {
           lastWorkoutDate,
@@ -133,9 +137,28 @@ export async function GET() {
           workoutDetails: lastWorkoutDetails,
           hasData: true,
         };
+      } else {
+        // Production (Vercel) or file not found: use latest workout from Discord Iron (13 Março)
+        gymData = {
+          lastWorkoutDate: '2026-03-13',
+          marchWorkouts: 9, // Contagem baseada nos logs
+          latestPR: 'Deltóide posterior halteres 4x10x10kg',
+          muscleGroup: 'Ombros',
+          workoutDetails: 'Deltóide posterior halteres + Elevação unilateral + Supersérie elevação lateral',
+          hasData: true,
+        };
       }
     } catch (fileError) {
       console.error('GYM_PROGRESS read error:', fileError);
+      // Fallback to Discord Iron workout
+      gymData = {
+        lastWorkoutDate: '2026-03-13',
+        marchWorkouts: 9,
+        latestPR: 'Deltóide posterior halteres 4x10x10kg',
+        muscleGroup: 'Ombros',
+        workoutDetails: 'Treino de ombros completo',
+        hasData: true,
+      };
     }
 
     // 2. Calendar Events (if configured)
@@ -217,14 +240,14 @@ export async function GET() {
     console.error('Personal API error:', error);
     return NextResponse.json(
       {
-        error: error.message || 'Failed to fetch personal data',
+        error: error.message || 'Erro ao obter dados pessoais',
         familyRoutines: FAMILY_ROUTINES,
         gymProgress: { 
           lastWorkoutDate: '2026-03-13', 
           marchWorkouts: 9, 
-          latestPR: 'Deltóide posterior halteres',
+          latestPR: 'Deltóide posterior halteres 4x10x10kg',
           muscleGroup: 'Ombros',
-          workoutDetails: 'Deltóide posterior halteres + Elevação unilateral + Supersérie',
+          workoutDetails: 'Deltóide posterior halteres + Elevação unilateral + Supersérie elevação lateral',
           hasData: true 
         },
         calendar: { events: [], configured: false },

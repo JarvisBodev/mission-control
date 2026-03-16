@@ -84,7 +84,7 @@ export default function PersonalSection() {
   }, []);
 
   const formatTime = (dateString: string, isAllDay: boolean) => {
-    if (isAllDay) return 'All day';
+    if (isAllDay) return 'Dia inteiro';
     
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', {
@@ -100,8 +100,8 @@ export default function PersonalSection() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+    if (date.toDateString() === today.toDateString()) return 'Hoje';
+    if (date.toDateString() === tomorrow.toDateString()) return 'Amanhã';
     
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -113,7 +113,7 @@ export default function PersonalSection() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-8">
-        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Personal Dashboard</h2>
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Dashboard Pessoal</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -147,16 +147,16 @@ export default function PersonalSection() {
   if (error || !data) {
     return (
       <div className="max-w-7xl mx-auto space-y-8">
-        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Personal Dashboard</h2>
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Dashboard Pessoal</h2>
         <div className="bg-zinc-900/40 border border-red-500/20 p-8 rounded-3xl text-center">
           <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-red-400 mb-2">Connection Error</h3>
-          <p className="text-zinc-400 mb-6">{error || 'Failed to load personal data'}</p>
+          <h3 className="text-xl font-semibold text-red-400 mb-2">Erro de Ligação</h3>
+          <p className="text-zinc-400 mb-6">{error || 'Falha ao carregar dados pessoais'}</p>
           <button
             onClick={fetchData}
             className="px-4 py-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500/20 transition-colors"
           >
-            Retry
+            Tentar Novamente
           </button>
         </div>
       </div>
@@ -166,7 +166,7 @@ export default function PersonalSection() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Personal Dashboard</h2>
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Dashboard Pessoal</h2>
         <button
           onClick={fetchData}
           className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 text-blue-500 transition-colors"
@@ -180,25 +180,25 @@ export default function PersonalSection() {
         <div className="lg:col-span-2">
           <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-zinc-300">Calendar Events</h3>
+              <h3 className="text-xl font-semibold text-zinc-300">Eventos do Calendário</h3>
               <span className="text-xs text-zinc-500 bg-zinc-900/50 px-3 py-1 rounded-full">
-                Next 7 days
+                Próximos 7 dias
               </span>
             </div>
             
             {!data.calendar.configured ? (
               <div className="p-6 text-center">
                 <CalendarIcon className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                <h4 className="text-lg font-semibold text-zinc-300 mb-2">Calendar Not Configured</h4>
+                <h4 className="text-lg font-semibold text-zinc-300 mb-2">Calendário Não Configurado</h4>
                 <p className="text-zinc-500">
-                  GOG_KEYRING_PASSWORD environment variable is required to access Google Calendar.
+                  Variável de ambiente GOG_KEYRING_PASSWORD necessária para aceder ao Google Calendar.
                 </p>
               </div>
             ) : data.calendar.events.length === 0 ? (
               <div className="p-6 text-center">
                 <CalendarIcon className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                <h4 className="text-lg font-semibold text-zinc-300 mb-2">No upcoming events</h4>
-                <p className="text-zinc-500">You have no events scheduled for the next 7 days.</p>
+                <h4 className="text-lg font-semibold text-zinc-300 mb-2">Sem eventos agendados</h4>
+                <p className="text-zinc-500">Não tem eventos agendados para os próximos 7 dias.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -251,7 +251,7 @@ export default function PersonalSection() {
             {data.calendar.configured && data.calendar.events.length > 5 && (
               <div className="pt-4 border-t border-white/5 text-center">
                 <p className="text-sm text-zinc-500">
-                  +{data.calendar.events.length - 5} more events
+                  +{data.calendar.events.length - 5} mais eventos
                 </p>
               </div>
             )}
@@ -262,15 +262,15 @@ export default function PersonalSection() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <SectionCard 
-              label="Next Event" 
-              value={data.calendar.configured && data.calendar.events.length > 0 ? "Today" : "None"} 
+              label="Próximo Evento" 
+              value={data.calendar.configured && data.calendar.events.length > 0 ? "Hoje" : "Nenhum"} 
               unit={data.calendar.configured && data.calendar.events.length > 0 ? formatTime(data.calendar.events[0].start, data.calendar.events[0].isAllDay) : ""} 
               icon={CalendarIcon} 
               color="text-blue-500" 
             />
             <SectionCard 
-              label="Last Workout" 
-              value={data.gymProgress.lastWorkoutDate ? data.gymProgress.lastWorkoutDate.split('-')[2] : "N/A"} 
+              label="Último Treino" 
+              value={data.gymProgress.lastWorkoutDate ? data.gymProgress.lastWorkoutDate.split('-')[2] : "N/D"} 
               unit="Mar" 
               icon={Activity} 
               color="text-emerald-500"
@@ -280,7 +280,7 @@ export default function PersonalSection() {
           <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-5">
             <h3 className="font-semibold text-zinc-300 mb-3 flex items-center gap-2">
               <Heart size={16} className="text-orange-500" />
-              Family Routines
+              Rotinas Familiares
             </h3>
             <div className="space-y-3">
               {data.familyRoutines.map((routine) => (
@@ -295,24 +295,24 @@ export default function PersonalSection() {
           <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-5">
             <h3 className="font-semibold text-zinc-300 mb-3 flex items-center gap-2">
               <TrendingUp size={16} className="text-purple-500" />
-              Gym Progress
+              Progresso Ginásio
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Last workout</span>
-                <span className="text-zinc-300">{data.gymProgress.lastWorkoutDate || 'Not recorded'}</span>
+                <span className="text-zinc-400">Último treino</span>
+                <span className="text-zinc-300">{data.gymProgress.lastWorkoutDate || 'Não registado'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Muscle Group</span>
+                <span className="text-zinc-400">Grupo Muscular</span>
                 <span className="text-zinc-300">{data.gymProgress.muscleGroup}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Workouts (Mar)</span>
+                <span className="text-zinc-400">Treinos (Mar)</span>
                 <span className="text-zinc-300">{data.gymProgress.marchWorkouts}</span>
               </div>
               {data.gymProgress.workoutDetails && (
                 <div className="mt-2 pt-2 border-t border-white/5">
-                  <p className="text-xs text-zinc-400">Last session:</p>
+                  <p className="text-xs text-zinc-400">Última sessão:</p>
                   <p className="text-xs text-zinc-300 truncate">{data.gymProgress.workoutDetails}</p>
                 </div>
               )}
@@ -320,14 +320,14 @@ export default function PersonalSection() {
           </div>
           
           <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-5">
-            <h3 className="font-semibold text-zinc-300 mb-3">Quick Stats</h3>
+            <h3 className="font-semibold text-zinc-300 mb-3">Estatísticas Rápidas</h3>
             <div className="space-y-2 text-sm">
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-zinc-400">Events this week</span>
+                <span className="text-zinc-400">Eventos esta semana</span>
                 <span className="text-zinc-300">{data.quickStats.eventsThisWeek}</span>
               </div>
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-zinc-400">Family tasks pending</span>
+                <span className="text-zinc-400">Tarefas familiares pendentes</span>
                 <span className="text-zinc-300">{data.quickStats.familyTasks}</span>
               </div>
             </div>
