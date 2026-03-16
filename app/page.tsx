@@ -51,27 +51,120 @@ const SectionCard = ({ label, value, unit, icon: Icon, color, onClick }: any) =>
 );
 
 // --- PERSONAL SUBSECTIONS ---
-const GymSection = () => (
-  <div className="max-w-7xl mx-auto space-y-8">
-    <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Ginásio</h2>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-        <h3 className="text-xl font-semibold text-zinc-300 mb-4 flex items-center gap-2">
-          <Dumbbell size={18} className="text-emerald-500" />
-          Próximos Treinos
-        </h3>
-        <p className="text-zinc-500">Integração com calendário em desenvolvimento.</p>
+const GymSection = () => {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/gym/workouts')
+      .then(res => res.json())
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Gym data fetch error:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500 mb-8">Ginásio</h2>
+        <p className="text-zinc-500">A carregar dados...</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Ginásio</h2>
+        <div className="flex items-center gap-4 text-sm">
+          <div className="text-zinc-400">
+            <span className="text-emerald-500 font-bold">{data?.stats?.marchWorkouts || 0}</span> treinos em Março
+          </div>
+          <div className="text-zinc-400">
+            <span className="text-purple-500 font-bold">{data?.stats?.prCount || 0}</span> PRs
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <SectionCard 
+          label="Frequência" 
+          value={data?.stats?.frequency || 'N/D'} 
+          unit="" 
+          icon={Activity} 
+          color="text-emerald-500" 
+        />
+        <SectionCard 
+          label="Último Treino" 
+          value={data?.stats?.lastWorkout?.split('-')[2] || 'N/D'} 
+          unit="Mar" 
+          icon={Dumbbell} 
+          color="text-blue-500" 
+        />
+        <SectionCard 
+          label="Volume Total" 
+          value={data?.stats?.totalVolume || 0} 
+          unit="sets" 
+          icon={BarChart3} 
+          color="text-purple-500" 
+        />
+        <SectionCard 
+          label="PRs" 
+          value={data?.stats?.prCount || 0} 
+          unit="recordes" 
+          icon={TrendingUp} 
+          color="text-orange-500" 
+        />
+      </div>
+
+      {/* Workouts Table */}
       <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-        <h3 className="text-xl font-semibold text-zinc-300 mb-4 flex items-center gap-2">
-          <TrendingUp size={18} className="text-purple-500" />
-          Progressão de Cargas
-        </h3>
-        <p className="text-zinc-500">Gráficos de evolução por exercício.</p>
+        <h3 className="text-xl font-semibold text-zinc-300 mb-6">Últimos Treinos</h3>
+        <div className="space-y-3">
+          {data?.workouts?.map((workout: any, idx: number) => (
+            <div 
+              key={idx}
+              className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 hover:border-white/10 transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-bold text-zinc-300">{workout.date}</div>
+                  <div className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    {workout.muscleGroup}
+                  </div>
+                  {workout.pr && (
+                    <div className="px-3 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                      🏆 PR
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-zinc-500">{workout.volume} sets</div>
+              </div>
+              <div className="text-sm text-zinc-400 mb-2">{workout.summary}</div>
+              {workout.prNote && (
+                <div className="text-xs text-orange-400 font-semibold">{workout.prNote}</div>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {workout.exercises?.map((ex: any, i: number) => (
+                  <div key={i} className="text-xs bg-zinc-900/60 px-3 py-1 rounded-lg border border-white/5">
+                    <span className="text-zinc-300">{ex.name}</span>
+                    <span className="text-zinc-600 ml-2">{ex.sets}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const CalendarSection = () => (
   <div className="max-w-7xl mx-auto space-y-8">
