@@ -162,7 +162,21 @@ export default function MissionControl() {
                active={activeTab.startsWith('Personal')}
                expanded={expandedPersonal}
                hasSubmenu={true}
-               onClick={() => setExpandedPersonal(!expandedPersonal)}
+               onClick={() => {
+                 if (expandedPersonal && activeTab !== 'Personal') {
+                   // Colapsar: voltar para Personal
+                   setActiveTab('Personal');
+                   setExpandedPersonal(false);
+                 } else if (!expandedPersonal) {
+                   // Expandir e ir para Personal
+                   setActiveTab('Personal');
+                   setExpandedPersonal(true);
+                 } else {
+                   // Já está em Personal: só toggle
+                   setExpandedPersonal(!expandedPersonal);
+                 }
+                 setSelectedFile(null);
+               }}
              />
              
              {expandedPersonal && (

@@ -187,22 +187,59 @@ export async function GET() {
       };
     }
 
-    // 2. Calendar Events (use new Google Calendar API)
+    // 2. Calendar Events (use Google Calendar API directly)
     let calendarEvents: any[] = [];
     let calendarConfigured = false;
     
-    try {
-      // Call internal calendar API
-      const calendarResponse = await fetch('http://localhost:3000/api/calendar?days=7');
-      if (calendarResponse.ok) {
-        const calendarData = await calendarResponse.json();
-        calendarEvents = calendarData.events || [];
-        calendarConfigured = calendarData.configured || false;
+    if (process.env.GOOGLE_REFRESH_TOKEN) {
+      try {
+        const { google } = await import('googleapis');
+        
+        const oauth2Client = new google.auth.OAuth2(
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.GOOGLE_CLIENT_SECRET,
+          process.env.GOOGLE_REDIRECT_URI
+        );
+
+        oauth2Client.setCredentials({
+          refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+        });
+
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+        const now = new Date();
+        const timeMin = now.toISOString();
+        const timeMax = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        const response = await calendar.events.list({
+          calendarId: 'primary',
+          timeMin,
+          timeMax,
+          maxResults: 50,
+          singleEvents: true,
+          orderBy: 'startTime',
+        });
+
+        calendarEvents = response.data.items?.map((event) => ({
+          id: event.id,
+          summary: event.summary || 'Sem título',
+          description: event.description || '',
+          start: event.start?.dateTime || event.start?.date,
+          end: event.end?.dateTime || event.end?.date,
+          location: event.location || '',
+          attendees: event.attendees?.map((a) => a.email) || [],
+          isAllDay: !event.start?.dateTime,
+        })).filter((event) => {
+          const eventStart = new Date(event.start);
+          return eventStart > now;
+        }) || [];
+        
+        calendarConfigured = true;
+      } catch (calendarError) {
+        console.error('Calendar fetch error:', calendarError);
+        calendarEvents = [];
+        calendarConfigured = false;
       }
-    } catch (calendarError) {
-      console.error('Calendar fetch error:', calendarError);
-      calendarEvents = [];
-      calendarConfigured = false;
     }
 
     // 3. Quick Stats
