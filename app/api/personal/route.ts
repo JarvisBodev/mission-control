@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
+
 // Path to GYM_PROGRESS.md
 const GYM_PROGRESS_PATH = path.join(process.env.HOME || '/home/ubuntu', 'clawd', 'memory', 'GYM_PROGRESS.md');
 
@@ -185,62 +187,22 @@ export async function GET() {
       };
     }
 
-    // 2. Calendar Events (if configured)
+    // 2. Calendar Events (use new Google Calendar API)
     let calendarEvents: any[] = [];
     let calendarConfigured = false;
     
-    if (process.env.GOG_KEYRING_PASSWORD) {
-      try {
-        const { exec } = await import('child_process');
-        const { promisify } = await import('util');
-        const execAsync = promisify(exec);
-        
-        const now = new Date();
-        const fromDate = now.toISOString().split('T')[0];
-        const toDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        
-        const command = `export GOG_KEYRING_PASSWORD="${process.env.GOG_KEYRING_PASSWORD}" && gog calendar events primary --from ${fromDate} --to ${toDate} --max 10 --account bedinbraga1@gmail.com --json`;
-        
-        const { stdout } = await execAsync(command, {
-          env: { ...process.env, GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD },
-          shell: '/bin/bash',
-          timeout: 5000,
-        });
-        
-        const result = JSON.parse(stdout || '{"events": []}');
-        
-        // Filter events: only those starting in the future (or all-day events for today)
-        calendarEvents = result.events
-          ?.map((event: any) => ({
-            id: event.id,
-            summary: event.summary || 'No title',
-            description: event.description || '',
-            start: event.start?.dateTime || event.start?.date,
-            end: event.end?.dateTime || event.end?.date,
-            location: event.location || '',
-            attendees: event.attendees?.map((a: any) => a.email) || [],
-            isAllDay: !event.start?.dateTime,
-          }))
-          .filter((event: any) => {
-            const eventStart = event.start;
-            const now = new Date();
-            
-            if (event.isAllDay) {
-              const eventDate = new Date(eventStart);
-              // All-day events for today or future days
-              return eventDate >= new Date(now.setHours(0, 0, 0, 0));
-            } else {
-              const eventTime = new Date(eventStart);
-              return eventTime > now;
-            }
-          }) || [];
-        
-        calendarConfigured = true;
-      } catch (calendarError) {
-        console.error('Calendar fetch error:', calendarError);
-        calendarEvents = [];
-        calendarConfigured = false;
+    try {
+      // Call internal calendar API
+      const calendarResponse = await fetch('http://localhost:3000/api/calendar?days=7');
+      if (calendarResponse.ok) {
+        const calendarData = await calendarResponse.json();
+        calendarEvents = calendarData.events || [];
+        calendarConfigured = calendarData.configured || false;
       }
+    } catch (calendarError) {
+      console.error('Calendar fetch error:', calendarError);
+      calendarEvents = [];
+      calendarConfigured = false;
     }
 
     // 3. Quick Stats
