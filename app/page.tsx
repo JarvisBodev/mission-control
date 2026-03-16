@@ -54,6 +54,7 @@ const SectionCard = ({ label, value, unit, icon: Icon, color, onClick }: any) =>
 const GymSection = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedWorkout, setExpandedWorkout] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/api/gym/workouts')
@@ -94,7 +95,7 @@ const GymSection = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <SectionCard 
-          label="Frequência" 
+          label="Frequência (Março)" 
           value={data?.stats?.frequency || 'N/D'} 
           unit="" 
           icon={Activity} 
@@ -108,14 +109,14 @@ const GymSection = () => {
           color="text-blue-500" 
         />
         <SectionCard 
-          label="Volume Total" 
-          value={data?.stats?.totalVolume || 0} 
+          label="Volume (Março)" 
+          value={data?.stats?.totalSets || 0} 
           unit="sets" 
           icon={BarChart3} 
           color="text-purple-500" 
         />
         <SectionCard 
-          label="PRs" 
+          label="PRs (Março)" 
           value={data?.stats?.prCount || 0} 
           unit="recordes" 
           icon={TrendingUp} 
@@ -123,41 +124,61 @@ const GymSection = () => {
         />
       </div>
 
-      {/* Workouts Table */}
+      {/* Workouts List with Accordion */}
       <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-        <h3 className="text-xl font-semibold text-zinc-300 mb-6">Últimos Treinos</h3>
+        <h3 className="text-xl font-semibold text-zinc-300 mb-6">Histórico de Treinos (Março)</h3>
         <div className="space-y-3">
           {data?.workouts?.map((workout: any, idx: number) => (
             <div 
               key={idx}
-              className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 hover:border-white/10 transition-all"
+              className="bg-zinc-900/40 border border-white/5 rounded-2xl overflow-hidden hover:border-white/10 transition-all"
             >
-              <div className="flex items-center justify-between mb-2">
+              {/* Header */}
+              <div 
+                className="p-4 cursor-pointer flex items-center justify-between"
+                onClick={() => setExpandedWorkout(expandedWorkout === idx ? null : idx)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-bold text-zinc-300">{workout.date}</div>
                   <div className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                     {workout.muscleGroup}
                   </div>
-                  {workout.pr && (
-                    <div className="px-3 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
-                      🏆 PR
-                    </div>
-                  )}
                 </div>
-                <div className="text-xs text-zinc-500">{workout.volume} sets</div>
+                <div className="flex items-center gap-3">
+                  <div className="text-xs text-zinc-500">{workout.exercises?.length || 0} exercícios</div>
+                  <ChevronDown 
+                    size={18} 
+                    className={`text-zinc-500 transition-transform ${expandedWorkout === idx ? 'rotate-180' : ''}`} 
+                  />
+                </div>
               </div>
-              <div className="text-sm text-zinc-400 mb-2">{workout.summary}</div>
+
+              {/* PR Note */}
               {workout.prNote && (
-                <div className="text-xs text-orange-400 font-semibold">{workout.prNote}</div>
+                <div className="px-4 pb-2">
+                  <div className="text-xs font-bold text-orange-400">{workout.prNote}</div>
+                </div>
               )}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {workout.exercises?.map((ex: any, i: number) => (
-                  <div key={i} className="text-xs bg-zinc-900/60 px-3 py-1 rounded-lg border border-white/5">
-                    <span className="text-zinc-300">{ex.name}</span>
-                    <span className="text-zinc-600 ml-2">{ex.sets}</span>
+
+              {/* Expanded Details */}
+              {expandedWorkout === idx && (
+                <div className="px-4 pb-4 pt-2 border-t border-white/5">
+                  <div className="space-y-4">
+                    {workout.exercises?.map((ex: any, i: number) => (
+                      <div key={i} className="space-y-2">
+                        <div className="text-sm font-semibold text-zinc-300">{ex.name}</div>
+                        <div className="space-y-1 pl-4">
+                          {ex.sets?.map((set: string, j: number) => (
+                            <div key={j} className="text-xs text-zinc-400 font-mono">
+                              {set}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
