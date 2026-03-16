@@ -9,11 +9,10 @@ export async function GET(request: NextRequest) {
     if (!process.env.GOOGLE_REFRESH_TOKEN) {
       return NextResponse.json(
         { 
-          error: 'Calendar not configured. Visit /api/calendar/google/auth to authorize.',
+          error: 'GOOGLE_REFRESH_TOKEN not configured. Visit /api/calendar/google/auth first.',
           configured: false,
-          events: [],
         },
-        { status: 200 } // Return 200 to avoid breaking UI
+        { status: 400 }
       );
     }
 
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     const events = response.data.items?.map((event) => ({
       id: event.id,
-      summary: event.summary || 'Sem título',
+      summary: event.summary || 'No title',
       description: event.description || '',
       start: event.start?.dateTime || event.start?.date,
       end: event.end?.dateTime || event.end?.date,
@@ -53,24 +52,17 @@ export async function GET(request: NextRequest) {
       isAllDay: !event.start?.dateTime,
     })) || [];
 
-    // Filter out past events
-    const futureEvents = events.filter((event) => {
-      const eventStart = new Date(event.start);
-      return eventStart > now;
-    });
-
     return NextResponse.json({
-      events: futureEvents,
+      events,
       configured: true,
-      count: futureEvents.length,
+      count: events.length,
     });
   } catch (error: any) {
-    console.error('Calendar API error:', error);
+    console.error('Calendar events fetch error:', error);
     return NextResponse.json(
       { 
         error: error.message,
         configured: !!process.env.GOOGLE_REFRESH_TOKEN,
-        events: [],
       },
       { status: 500 }
     );
