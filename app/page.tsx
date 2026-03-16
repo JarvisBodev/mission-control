@@ -11,9 +11,9 @@ import {
   BarChart3, ChevronDown, PieChart, Power
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import CalendarEvents from '../components/ui/CalendarEvents';
-import JarvisSection from '../components/sections/JarvisSection';
-import PersonalSection from '../components/sections/PersonalSection';
+import CalendarEvents from '@/components/ui/CalendarEvents';
+import JarvisSection from '@/components/sections/JarvisSection';
+import PersonalSection from '@/components/sections/PersonalSection';
 
 // --- TYPES ---
 interface SidebarItemProps {
