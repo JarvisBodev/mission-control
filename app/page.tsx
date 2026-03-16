@@ -8,7 +8,7 @@ import {
   Calendar as CalendarIcon, Clock, Trash2, CheckCircle2, Circle,
   Terminal, RefreshCw, HardDrive, ChevronLeft, Bot, User, Target,
   TrendingUp, Home, Building2, Heart, Search, Hammer, Calculator, Plane, Eraser,
-  BarChart3, ChevronDown, PieChart, Power
+  BarChart3, ChevronDown, PieChart, Power, Dumbbell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalendarEvents from '@/components/ui/CalendarEvents';
@@ -50,9 +50,51 @@ const SectionCard = ({ label, value, unit, icon: Icon, color, onClick }: any) =>
   </motion.div>
 );
 
+// --- PERSONAL SUBSECTIONS ---
+const GymSection = () => (
+  <div className="max-w-7xl mx-auto space-y-8">
+    <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Ginásio</h2>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+        <h3 className="text-xl font-semibold text-zinc-300 mb-4 flex items-center gap-2">
+          <Dumbbell size={18} className="text-emerald-500" />
+          Próximos Treinos
+        </h3>
+        <p className="text-zinc-500">Integração com calendário em desenvolvimento.</p>
+      </div>
+      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+        <h3 className="text-xl font-semibold text-zinc-300 mb-4 flex items-center gap-2">
+          <TrendingUp size={18} className="text-purple-500" />
+          Progressão de Cargas
+        </h3>
+        <p className="text-zinc-500">Gráficos de evolução por exercício.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const CalendarSection = () => (
+  <div className="max-w-7xl mx-auto space-y-8">
+    <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Calendário</h2>
+    <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+      <p className="text-zinc-500">Integração com Google Calendar em desenvolvimento.</p>
+    </div>
+  </div>
+);
+
+const FamilySection = () => (
+  <div className="max-w-7xl mx-auto space-y-8">
+    <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Rotinas Familiares</h2>
+    <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+      <p className="text-zinc-500">Gestão de rotinas e tarefas familiares.</p>
+    </div>
+  </div>
+);
+
 export default function MissionControl() {
   // Navigation State
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [expandedPersonal, setExpandedPersonal] = useState(false);
 
   // Data State
   const [tasks, setTasks] = useState<any[]>([]);
@@ -66,6 +108,12 @@ export default function MissionControl() {
   useEffect(() => {
     refreshData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab.startsWith('Personal/')) {
+      setExpandedPersonal(true);
+    }
+  }, [activeTab]);
 
   const refreshData = async () => {
     try {
@@ -108,7 +156,37 @@ export default function MissionControl() {
 
           <div className="space-y-1">
              <span className="px-3 text-[10px] font-black uppercase tracking-widest text-zinc-700 mb-2 block">Pessoal</span>
-             <SidebarItem icon={User} label="Pessoal" active={activeTab === 'Personal'} onClick={() => {setActiveTab('Personal'); setSelectedFile(null);}} />
+             <SidebarItem 
+               icon={User} 
+               label="Pessoal" 
+               active={activeTab.startsWith('Personal')}
+               expanded={expandedPersonal}
+               hasSubmenu={true}
+               onClick={() => setExpandedPersonal(!expandedPersonal)}
+             />
+             
+             {expandedPersonal && (
+               <div className="ml-4 pl-2 border-l border-white/5 space-y-1 mt-1">
+                 <SidebarItem 
+                   icon={Dumbbell} 
+                   label="Ginásio" 
+                   active={activeTab === 'Personal/Gym'} 
+                   onClick={() => {setActiveTab('Personal/Gym'); setSelectedFile(null);}}
+                 />
+                 <SidebarItem 
+                   icon={CalendarIcon} 
+                   label="Calendário" 
+                   active={activeTab === 'Personal/Calendar'} 
+                   onClick={() => {setActiveTab('Personal/Calendar'); setSelectedFile(null);}}
+                 />
+                 <SidebarItem 
+                   icon={Heart} 
+                   label="Rotinas Familiares" 
+                   active={activeTab === 'Personal/Family'} 
+                   onClick={() => {setActiveTab('Personal/Family'); setSelectedFile(null);}}
+                 />
+               </div>
+             )}
           </div>
 
           <div className="space-y-1">
@@ -135,6 +213,9 @@ export default function MissionControl() {
              <h1 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-400">
                {selectedFile ? "DOCUMENT VIEW" : 
                 activeTab === 'Personal' ? 'Pessoal' : 
+                activeTab === 'Personal/Gym' ? 'Ginásio' :
+                activeTab === 'Personal/Calendar' ? 'Calendário' :
+                activeTab === 'Personal/Family' ? 'Rotinas Familiares' :
                 activeTab === 'Projects' ? 'Projetos' :
                 activeTab === 'Settings' ? 'Definições' :
                 activeTab}
@@ -170,6 +251,12 @@ export default function MissionControl() {
               </div>
             ) : activeTab === 'Personal' ? (
               <PersonalSection />
+            ) : activeTab === 'Personal/Gym' ? (
+              <GymSection />
+            ) : activeTab === 'Personal/Calendar' ? (
+              <CalendarSection />
+            ) : activeTab === 'Personal/Family' ? (
+              <FamilySection />
             ) : activeTab === 'Jarvis' ? (
               <JarvisSection />
             ) : activeTab === 'Projects' ? (
