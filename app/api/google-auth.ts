@@ -13,7 +13,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'https://mission-control-cimwbgvoq-jarvisbodevs-projects.vercel.app/api/google-callback'
     );
 
-    const scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
+    const scopes = [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/spreadsheets.readonly'
+    ];
 
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
