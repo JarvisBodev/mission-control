@@ -189,12 +189,12 @@ export async function GET() {
       },
       projetos: {
         emRemodelacao: apartamentos
-          .filter(a => a.status === 'Em Remodelação')
+          .filter(a => a.status === 'Em Remodelação' || a.status === 'Em Construção')
           .map(apt => ({
             id: apt.id,
             nome: apt.morada || apt.nome,
             previsao: apt.id === 'LOJA' ? '2027' : 'Setembro 2026',
-            tipo: apt.id === 'FABRICA' ? 'Airbnb' : apt.id === 'LOJA' ? 'Por definir' : 'Arrendamento estudantes',
+            tipo: apt.id === 'FABRICA' ? 'Em Construção' : apt.id === 'LOJA' ? 'Por definir' : 'Arrendamento estudantes',
           })),
       },
     });
@@ -225,7 +225,7 @@ export async function GET() {
       projetos: {
         emRemodelacao: [
           { id: '63', nome: 'Manuel Monteiro 63', previsao: 'Setembro 2026', tipo: 'Arrendamento estudantes' },
-          { id: 'FABRICA', nome: 'Fábrica (Airbnb)', previsao: 'Setembro 2026', tipo: 'Airbnb' },
+          { id: 'FABRICA', nome: 'Fábrica', previsao: 'Setembro 2026', tipo: 'Em Construção' },
           { id: 'LOJA', nome: 'Loja 349', previsao: '2027', tipo: 'Por definir' },
         ],
       },

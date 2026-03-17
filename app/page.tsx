@@ -51,6 +51,289 @@ const SectionCard = ({ label, value, unit, icon: Icon, color, onClick }: any) =>
   </motion.div>
 );
 
+// --- OVERVIEW SECTION (Hybrid Dashboard) ---
+const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void }) => {
+  const [binbData, setBinbData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOverviewData = async () => {
+    setRefreshing(true);
+    try {
+      const response = await fetch('/api/binb');
+      const data = await response.json();
+      setBinbData(data);
+    } catch (error) {
+      console.error('Error fetching BINB data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOverviewData();
+  }, []);
+
+  // Calculate urgent alerts
+  const urgentAlerts = binbData?.alertas?.segurosExpiring?.length || 0;
+  const pendingContracts = binbData?.alertas?.contratosPendentes?.length || 0;
+  const upcomingCheckouts = binbData?.alertas?.upcomingCheckouts?.length || 0;
+  const totalAlerts = urgentAlerts + pendingContracts + upcomingCheckouts;
+
+  // Get current hour for greeting
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? 'Bom dia' : currentHour < 18 ? 'Boa tarde' : 'Boa noite';
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-10">
+      {/* Header with Greeting & Refresh */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-white">{greeting}, Filipe</h1>
+          <p className="text-zinc-500 mt-2">Dashboard de comando • Dados atualizados em tempo real</p>
+        </div>
+        <button 
+          onClick={fetchOverviewData}
+          className={`px-6 py-3 rounded-xl border border-white/10 bg-black/40 backdrop-blur-sm flex items-center gap-2 hover:bg-white/5 transition-all ${refreshing ? 'opacity-70' : ''}`}
+          disabled={refreshing}
+        >
+          <RefreshCw size={16} className={`${refreshing ? 'animate-spin' : ''}`} />
+          <span className="text-sm font-semibold">{refreshing ? 'A atualizar...' : 'Atualizar Tudo'}</span>
+        </button>
+      </div>
+
+      {/* 1. KPIs EXECUTIVOS (Grid 4x) */}
+      <div>
+        <h2 className="text-xl font-bold text-zinc-300 mb-4 flex items-center gap-2">
+          <Activity size={20} className="text-blue-500" />
+          KPIs Críticos
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* BINB Cashflow */}
+          <SectionCard 
+            label="Cashflow BINB" 
+            value={loading ? "--" : `€${binbData?.summary?.cashflowMensal?.toLocaleString() || '0'}`}
+            unit="mensal"
+            icon={TrendingUp}
+            color="text-emerald-500"
+            onClick={() => setActiveTab('BINB')}
+          />
+          
+          {/* Occupancy Rate */}
+          <SectionCard 
+            label="Taxa Ocupação" 
+            value={loading ? "--" : `${binbData?.summary?.taxaOcupacao || 0}%`}
+            unit={`${binbData?.summary?.quartosOcupados || 0}/${binbData?.summary?.totalQuartos || 0} quartos`}
+            icon={Home}
+            color="text-blue-500"
+            onClick={() => setActiveTab('BINB')}
+          />
+          
+          {/* Urgent Alerts */}
+          <SectionCard 
+            label="Alertas Urgentes" 
+            value={totalAlerts}
+            unit={pendingContracts > 0 ? `${pendingContracts} contratos` : "tudo OK"}
+            icon={totalAlerts > 0 ? AlertTriangle : ShieldCheck}
+            color={totalAlerts > 0 ? "text-red-500" : "text-green-500"}
+            onClick={() => setActiveTab('BINB/Reminders')}
+          />
+          
+          {/* Next Event */}
+          <SectionCard 
+            label="Próximo Evento" 
+            value="9:00"
+            unit="Lourenço colégio"
+            icon={CalendarIcon}
+            color="text-purple-500"
+            onClick={() => setActiveTab('Personal/Calendar')}
+          />
+        </div>
+      </div>
+
+      {/* 2. SISTEMA DE ALERTA + 3. RESUMO ONE GLANCE (Side by Side) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* LEFT: Sistema de Alerta Prioritário */}
+        <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+          <h2 className="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+            <Bell size={20} className="text-orange-500" />
+            Alertas do Dia
+            {totalAlerts > 0 && (
+              <span className="px-3 py-1 rounded-full text-xs font-black bg-red-500/20 text-red-400 border border-red-500/30 ml-2">
+                {totalAlerts}
+              </span>
+            )}
+          </h2>
+          
+          <div className="space-y-4">
+            {/* Seguros a Vencer */}
+            {binbData?.alertas?.segurosExpiring?.length > 0 ? (
+              <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-bold text-red-400 flex items-center gap-2">
+                    <AlertTriangle size={14} />
+                    Seguros a Vencer ({binbData.alertas.segurosExpiring.length})
+                  </div>
+                  <div className="text-xs text-red-400/70">Urgente</div>
+                </div>
+                <div className="text-sm text-zinc-400">
+                  {binbData.alertas.segurosExpiring.slice(0, 2).map((s: any, i: number) => (
+                    <div key={i} className="mt-1">• {s.apartamento}: {s.validade}</div>
+                  ))}
+                  {binbData.alertas.segurosExpiring.length > 2 && (
+                    <div className="mt-1 text-zinc-500">+{binbData.alertas.segurosExpiring.length - 2} mais</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <CheckCircle size={14} />
+                  <span className="text-sm font-bold">Seguros: Todos renovados</span>
+                </div>
+              </div>
+            )}
+
+            {/* Contratos Pendentes */}
+            {pendingContracts > 0 ? (
+              <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-bold text-orange-400 flex items-center gap-2">
+                    <FileText size={14} />
+                    Contratos Pendentes ({pendingContracts})
+                  </div>
+                  <div className="text-xs text-orange-400/70">Ação necessária</div>
+                </div>
+                <div className="text-sm text-zinc-400">
+                  {binbData.alertas.contratosPendentes.slice(0, 2).map((c: any, i: number) => (
+                    <div key={i} className="mt-1">• {c.nome} ({c.apartamento})</div>
+                  ))}
+                  {pendingContracts > 2 && (
+                    <div className="mt-1 text-zinc-500">+{pendingContracts - 2} mais</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <CheckCircle size={14} />
+                  <span className="text-sm font-bold">Contratos: Todos regularizados</span>
+                </div>
+              </div>
+            )}
+
+            {/* Check-outs Próximos */}
+            {upcomingCheckouts > 0 && (
+              <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4">
+                <div className="text-sm font-bold text-blue-400 mb-1 flex items-center gap-2">
+                  <CalendarIcon size={14} />
+                  Check-outs Próximos ({upcomingCheckouts})
+                </div>
+                <div className="text-sm text-zinc-400">
+                  {binbData.alertas.upcomingCheckouts.slice(0, 2).map((c: any, i: number) => (
+                    <div key={i} className="mt-1">• {c.nome} ({c.checkOut})</div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: Resumo One Glance */}
+        <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+          <h2 className="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+            <Activity size={20} className="text-blue-500" />
+            Status do Sistema
+          </h2>
+          
+          <div className="space-y-6">
+            {/* BINB Status */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+                  <Building2 size={16} className="text-blue-500" />
+                  BINB - Gestão de Ativos
+                </div>
+                <div className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {loading ? '--' : `${binbData?.summary?.operatingAssets || 0}/${binbData?.summary?.totalApartamentos || 0}`} ativos
+                </div>
+              </div>
+              <div className="text-sm text-zinc-400 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span>Cashflow mensal:</span>
+                  <span className="font-semibold text-emerald-400">€{binbData?.summary?.cashflowMensal?.toLocaleString() || '--'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Ocupação:</span>
+                  <span className="font-semibold text-blue-400">{binbData?.summary?.taxaOcupacao || '--'}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Projetos ativos:</span>
+                  <span className="font-semibold text-orange-400">{binbData?.projetos?.emRemodelacao?.length || 0} em desenvolvimento</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Personal Status */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+                  <User size={16} className="text-purple-500" />
+                  Pessoal
+                </div>
+                <div className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  2 eventos hoje
+                </div>
+              </div>
+              <div className="text-sm text-zinc-400 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span>Próximo evento:</span>
+                  <span className="font-semibold">9:00 (Colégio)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Treinos este mês:</span>
+                  <span className="font-semibold text-emerald-400">7 (Março)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* System Status */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+                  <Bot size={16} className="text-cyan-500" />
+                  Jarvis System
+                </div>
+                <div className="px-3 py-1 rounded-full text-xs font-black bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  ✅ Operacional
+                </div>
+              </div>
+              <div className="text-sm text-zinc-400 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span>API BINB:</span>
+                  <span className="font-semibold text-emerald-400">{loading ? 'Carregando...' : '✅ Conectada'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Dados atualizados:</span>
+                  <span className="font-semibold">há 5 min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Motto/Quote Footer */}
+      <div className="bg-zinc-900/10 border border-white/5 p-12 rounded-[4rem] text-center">
+        <p className="text-xl font-serif italic text-zinc-400 tracking-wide">
+          "Construir um ecossistema de ativos diversificado para liberdade financeira absoluta."
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // --- PERSONAL SUBSECTIONS ---
 const GymSection = () => {
   const [data, setData] = useState<any>(null);
@@ -588,14 +871,8 @@ export default function MissionControl() {
         <div className="flex-1 p-10 overflow-y-auto">
           <AnimatePresence mode="wait">
             {activeTab === 'Dashboard' ? (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <SectionCard label="Active Tasks" value={filipeTasks.filter(t => !t.completed).length} unit="Pending" icon={Target} color="text-blue-500" onClick={() => setActiveTab('Projects')} />
-                    <SectionCard label="Net Worth" value="2.55" unit="M€ Equity" icon={TrendingUp} color="text-emerald-500" onClick={() => setActiveTab('BINB')} />
-                    <SectionCard label="Calories" value={latestHealth?.nutrition?.est_calories || 0} unit="kCal Today" icon={PieChart} color="text-orange-500" onClick={() => setActiveTab('Personal')} />
-                    <SectionCard label="System Health" value="100" unit="%" icon={Activity} color="text-blue-400" onClick={() => setActiveTab('Jarvis')} />
-                 </div>
-                 <div className="bg-zinc-900/10 border border-white/5 p-12 rounded-[4rem] text-center"><p className="text-xl font-serif italic text-zinc-400 tracking-wide">"Construir um ecossistema de ativos diversificado para liberdade financeira absoluta."</p></div>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <OverviewSection setActiveTab={setActiveTab} />
               </motion.div>
             ) : activeTab === 'BINB' ? (
               <BinbSection />
