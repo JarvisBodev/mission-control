@@ -31,9 +31,11 @@ interface BinbData {
   analise: Array<{
     apartamento: string;
     receitaBruta: number;
-    custosFixos: number;
-    cashflow: number;
-    margem: number;
+    quartosOcupados?: number;
+    totalQuartos?: number;
+    custosFixos?: number;
+    cashflow?: number;
+    margem?: number;
   }>;
   alertas: {
     segurosExpiring: Array<{
@@ -275,6 +277,8 @@ export default function BinbSection() {
             const aptInfo = apartamentos.find(a => a.id === apt.apartamento);
             const occ = ocupacao[apt.apartamento];
             const isExpanded = expandedApt === apt.apartamento;
+            const margem = apt.margem ?? (apt.totalQuartos && apt.quartosOcupados ? Math.round((apt.quartosOcupados / apt.totalQuartos) * 100) : 100);
+            const cashflow = apt.cashflow ?? apt.receitaBruta;
             
             return (
               <motion.div
@@ -290,19 +294,19 @@ export default function BinbSection() {
                         <p className="text-xs text-zinc-500 truncate max-w-[180px]">{aptInfo.morada}</p>
                       )}
                     </div>
-                    <div className={`text-xs px-2 py-1 rounded-full ${apt.margem >= 80 ? 'bg-green-500/20 text-green-400' : apt.margem >= 50 ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}`}>
-                      {apt.margem.toFixed(0)}%
+                    <div className={`text-xs px-2 py-1 rounded-full ${margem >= 80 ? 'bg-green-500/20 text-green-400' : margem >= 50 ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}`}>
+                      {margem}%
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1">
                       <Users size={12} className="text-zinc-500" />
-                      <span>{occ?.occupied || 0}/{occ?.total || 0}</span>
+                      <span>{occ?.occupied || apt.quartosOcupados || 0}/{occ?.total || apt.totalQuartos || 0}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Euro size={12} className="text-zinc-500" />
-                      <span className="text-green-400">{formatCurrency(apt.cashflow)}</span>
+                      <span className="text-green-400">{formatCurrency(cashflow)}</span>
                     </div>
                     {isExpanded ? <ChevronDown size={14} className="ml-auto text-zinc-500" /> : <ChevronRight size={14} className="ml-auto text-zinc-500" />}
                   </div>
@@ -322,16 +326,16 @@ export default function BinbSection() {
                           <p className="font-semibold">{formatCurrency(apt.receitaBruta)}</p>
                         </div>
                         <div>
-                          <span className="text-zinc-500">Custos</span>
-                          <p className="font-semibold">{formatCurrency(apt.custosFixos)}</p>
+                          <span className="text-zinc-500">Quartos</span>
+                          <p className="font-semibold">{apt.quartosOcupados || occ?.occupied || 0}/{apt.totalQuartos || occ?.total || 0}</p>
                         </div>
                         <div>
                           <span className="text-zinc-500">Cashflow</span>
-                          <p className="font-semibold text-green-400">{formatCurrency(apt.cashflow)}</p>
+                          <p className="font-semibold text-green-400">{formatCurrency(cashflow)}</p>
                         </div>
                         <div>
-                          <span className="text-zinc-500">Margem</span>
-                          <p className="font-semibold">{apt.margem.toFixed(1)}%</p>
+                          <span className="text-zinc-500">Ocupação</span>
+                          <p className="font-semibold">{margem}%</p>
                         </div>
                       </div>
                     </motion.div>
