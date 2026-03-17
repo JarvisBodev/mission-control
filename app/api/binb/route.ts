@@ -1,19 +1,35 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { google } from 'googleapis';
 
-const execAsync = promisify(exec);
+export const dynamic = 'force-dynamic';
 
 const SHEET_ID = '1jGna6XTDKh-siRwlNdZ-gWVpQ4Rx4s45MH33pHWDLSE';
 
-async function fetchSheet(range: string): Promise<any[][]> {
+async function getSheets() {
+  if (!process.env.GOOGLE_REFRESH_TOKEN) {
+    throw new Error('Google not configured');
+  }
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+  });
+
+  return google.sheets({ version: 'v4', auth: oauth2Client });
+}
+
+async function fetchSheet(sheets: any, range: string): Promise<any[][]> {
   try {
-    const { stdout } = await execAsync(
-      `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog sheets get ${SHEET_ID} "${range}" --json`,
-      { timeout: 30000, env: { ...process.env, PATH: `${process.env.PATH}:/usr/local/bin:/usr/bin` } }
-    );
-    const data = JSON.parse(stdout);
-    return data.values || [];
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: range,
+    });
+    return response.data.values || [];
   } catch (error) {
     console.error(`Failed to fetch ${range}:`, error);
     return [];
@@ -22,16 +38,17 @@ async function fetchSheet(range: string): Promise<any[][]> {
 
 export async function GET() {
   try {
+    const sheets = await getSheets();
+
     // Fetch data from correct tabs
-    const [masterInput, contratos, seguros, analiseRaw] = await Promise.all([
-      fetchSheet("MASTER_INPUT!A1:M15"),
-      fetchSheet("'EntradasSaídas'!A1:N60"),
-      fetchSheet("Seguros!A1:J25"),
-      fetchSheet("'Análise'!A1:E30"),
+    const [masterInput, contratos, seguros] = await Promise.all([
+      fetchSheet(sheets, "MASTER_INPUT!A1:M15"),
+      fetchSheet(sheets, "EntradasSaídas!A1:N60"),
+      fetchSheet(sheets, "Seguros!A1:J25"),
     ]);
 
     // Parse MASTER_INPUT (Portfolio)
-    const apartamentos = masterInput.slice(1).filter(row => row && row[0] && !row[0].includes('─')).map(row => ({
+    const apartamentos = masterInput.slice(1).filter(row => row && row[0] && !String(row[0]).includes('─')).map(row => ({
       id: row[0],
       nome: row[1] || '',
       morada: row[2] || '',
@@ -85,32 +102,15 @@ export async function GET() {
       validade: row[5],
     }));
 
-    // Fixed OPEX values (from our calculations)
-    const opex = 6242; // Total OPEX mensal confirmado
-    
-    // Parse Análise dashboard for KPIs
-    let totalAssets = 11;
-    let operatingAssets = 8;
-    let totalQuartos = 35;
-    let quartosOcupados = 35;
-
-    // Try to extract from Análise
-    analiseRaw.forEach(row => {
-      if (!row || !row[0]) return;
-      const label = String(row[0]).toLowerCase();
-      const value = parseFloat(String(row[1] || '0').replace(/[€,\s]/g, '').replace(',', '.')) || 0;
-      
-      if (label.includes('total assets')) totalAssets = value || totalAssets;
-      if (label.includes('operating assets')) operatingAssets = value || operatingAssets;
-      if (label.includes('total units')) totalQuartos = value || totalQuartos;
-      if (label.includes('occupied units')) quartosOcupados = value || quartosOcupados;
-    });
+    // Fixed values
+    const opex = 6242;
+    const totalAssets = 11;
+    const operatingAssets = 8;
+    const totalQuartos = 35;
 
     // If we got contracts, use real data
-    if (contratosActivos.length > 0) {
-      quartosOcupados = contratosActivos.length;
-      receitaTotal = Object.values(receitaPorApt).reduce((a, b) => a + b, 0);
-    }
+    const quartosOcupados = contratosActivos.length > 0 ? contratosActivos.length : 35;
+    const receita = receitaTotal > 0 ? receitaTotal : 11900;
 
     // Contracts with pending items
     const contratosPendentes = contratosActivos.filter(row => {
@@ -154,8 +154,7 @@ export async function GET() {
         totalQuartos: apt.quartos,
       }));
 
-    // Calculate totals (use real receita or fallback)
-    const receita = receitaTotal > 0 ? receitaTotal : 11900;
+    // Calculate totals
     const cashflow = receita - opex;
     const margem = receita > 0 ? (cashflow / receita * 100) : 0;
 
@@ -201,9 +200,36 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error('BINB API error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch BINB data' },
-      { status: 500 }
-    );
+    
+    // Return fallback data if Google API fails
+    return NextResponse.json({
+      summary: {
+        totalApartamentos: 11,
+        operatingAssets: 8,
+        totalQuartos: 35,
+        quartosOcupados: 35,
+        taxaOcupacao: 100,
+        receitaMensal: 11900,
+        custosMensais: 6242,
+        cashflowMensal: 5658,
+        margemMedia: 47.5,
+      },
+      apartamentos: [],
+      ocupacao: {},
+      analise: [],
+      alertas: {
+        segurosExpiring: [],
+        upcomingCheckouts: [],
+        contratosPendentes: [],
+      },
+      projetos: {
+        emRemodelacao: [
+          { id: '63', nome: 'Manuel Monteiro 63', previsao: 'Setembro 2026', tipo: 'Arrendamento estudantes' },
+          { id: 'FABRICA', nome: 'Fábrica (Airbnb)', previsao: 'Setembro 2026', tipo: 'Airbnb' },
+          { id: 'LOJA', nome: 'Loja 349', previsao: '2027', tipo: 'Por definir' },
+        ],
+      },
+      error: 'Using fallback data - Google Sheets connection failed',
+    });
   }
 }
