@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
 
     // Filter out past events
     const futureEvents = events.filter((event) => {
+      if (!event.start) return false;
       const eventStart = new Date(event.start);
       return eventStart > now;
     });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Activity, ShieldCheck, Zap, Terminal, Cpu, AlertTriangle, CheckCircle, XCircle, RefreshCw, Database, Server, Users, BarChart3, Clock, CpuIcon } from 'lucide-react';
+import { Activity, ShieldCheck, Zap, Terminal, Cpu, AlertTriangle, CheckCircle, XCircle, RefreshCw, Database, Server, Users, BarChart3, Clock, CpuIcon, Power, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface JarvisData {
@@ -64,6 +64,32 @@ export default function JarvisSection() {
   const [data, setData] = useState<JarvisData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [restarting, setRestarting] = useState<string | null>(null);
+
+  const handleRestart = async (target: 'jarvis' | 'gateway') => {
+    if (!confirm(`Tens a certeza que queres fazer restart ao ${target}?`)) return;
+    
+    setRestarting(target);
+    try {
+      const response = await fetch('/api/jarvis/restart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert(`${target} restart iniciado com sucesso!`);
+        // Wait a bit and refresh data
+        setTimeout(fetchData, 5000);
+      } else {
+        alert(`Erro: ${result.error}`);
+      }
+    } catch (err: any) {
+      alert(`Erro ao fazer restart: ${err.message}`);
+    } finally {
+      setRestarting(null);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -145,8 +171,27 @@ export default function JarvisSection() {
           <button
             onClick={fetchData}
             className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 text-blue-500 transition-colors"
+            title="Refresh"
           >
             <RefreshCw size={14} />
+          </button>
+          <button
+            onClick={() => handleRestart('gateway')}
+            disabled={restarting !== null}
+            className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-lg hover:bg-amber-500/20 text-amber-500 transition-colors disabled:opacity-50"
+            title="Restart Gateway"
+          >
+            <RotateCcw size={14} className={restarting === 'gateway' ? 'animate-spin' : ''} />
+            <span className="text-xs font-medium">Gateway</span>
+          </button>
+          <button
+            onClick={() => handleRestart('jarvis')}
+            disabled={restarting !== null}
+            className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg hover:bg-red-500/20 text-red-500 transition-colors disabled:opacity-50"
+            title="Restart Jarvis"
+          >
+            <Power size={14} className={restarting === 'jarvis' ? 'animate-pulse' : ''} />
+            <span className="text-xs font-medium">Jarvis</span>
           </button>
         </div>
       </div>

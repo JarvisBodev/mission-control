@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CalendarEvents from '@/components/ui/CalendarEvents';
 import JarvisSection from '@/components/sections/JarvisSection';
 import PersonalSection from '@/components/sections/PersonalSection';
+import BinbSection from '@/components/sections/BinbSection';
 
 // --- TYPES ---
 interface SidebarItemProps {
@@ -597,18 +598,7 @@ export default function MissionControl() {
                  <div className="bg-zinc-900/10 border border-white/5 p-12 rounded-[4rem] text-center"><p className="text-xl font-serif italic text-zinc-400 tracking-wide">"Construir um ecossistema de ativos diversificado para liberdade financeira absoluta."</p></div>
               </motion.div>
             ) : activeTab === 'BINB' ? (
-              <div className="max-w-6xl mx-auto space-y-8">
-                 <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">BINB - Asset Management</h2>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <SectionCard label="Apartments" value="6" unit="Units" icon={Building2} color="text-blue-500" />
-                    <SectionCard label="Occupancy" value="83%" unit="Rate" icon={TrendingUp} color="text-emerald-500" />
-                    <SectionCard label="Monthly Rent" value="€3,850" unit="Total" icon={Calculator} color="text-orange-500" />
-                 </div>
-                 <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-3xl">
-                    <h3 className="text-xl font-semibold mb-4">Coming Soon</h3>
-                    <p className="text-zinc-400">Integration with Google Sheets for real-time apartment data, rent tracking, and contract management.</p>
-                 </div>
-              </div>
+              <BinbSection />
             ) : activeTab === 'BINB/Reminders' ? (
               <BinbRemindersSection />
             ) : activeTab === 'Personal' ? (

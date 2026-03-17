@@ -230,6 +230,7 @@ export async function GET() {
           attendees: event.attendees?.map((a) => a.email) || [],
           isAllDay: !event.start?.dateTime,
         })).filter((event) => {
+          if (!event.start) return false;
           const eventStart = new Date(event.start);
           return eventStart > now;
         }) || [];
