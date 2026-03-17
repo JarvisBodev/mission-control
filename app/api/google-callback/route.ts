@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -18,13 +16,12 @@ export async function GET(request: NextRequest) {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI || 'https://mission-control-roan-nine.vercel.app/api/google-callback'
+      process.env.GOOGLE_REDIRECT_URI || 'https://mission-control-36y9.vercel.app/api/google-callback'
     );
 
     const { tokens } = await oauth2Client.getToken(code);
 
-    return new NextResponse(
-      `
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -82,10 +79,6 @@ export async function GET(request: NextRequest) {
               margin-left: 20px;
               line-height: 2;
             }
-            .instructions li {
-              margin: 15px 0;
-              color: #d4d4d8;
-            }
             code {
               background: #18181b;
               padding: 4px 8px;
@@ -93,13 +86,7 @@ export async function GET(request: NextRequest) {
               color: #3b82f6;
               font-family: 'Monaco', monospace;
             }
-            a {
-              color: #3b82f6;
-              text-decoration: none;
-            }
-            a:hover {
-              text-decoration: underline;
-            }
+            a { color: #3b82f6; text-decoration: none; }
             .warning {
               background: #7f1d1d;
               color: #fca5a5;
@@ -112,56 +99,53 @@ export async function GET(request: NextRequest) {
         <body>
           <div class="container">
             <h1>✅ Autorização Completa!</h1>
-            <p class="success">Google Calendar conectado com sucesso.</p>
+            <p class="success">Google Calendar + Sheets conectados com sucesso.</p>
             
             ${tokens.refresh_token ? `
               <div class="token-box">
                 <div class="label">🔑 Refresh Token:</div>
                 ${tokens.refresh_token}
               </div>
+              <div class="instructions">
+                <h3>📋 Próximos passos:</h3>
+                <ol>
+                  <li><strong>Copia</strong> o Refresh Token acima</li>
+                  <li>Vai a: <a href="https://vercel.com" target="_blank">Vercel</a> → Settings → Environment Variables</li>
+                  <li>Actualiza <code>GOOGLE_REFRESH_TOKEN</code> com o novo valor</li>
+                  <li>Faz redeploy do projecto</li>
+                  <li>✅ Dashboard com Calendar + BINB data!</li>
+                </ol>
+              </div>
             ` : `
               <div class="warning">
-                <strong>⚠️ AVISO:</strong> Refresh token não recebido.<br>
-                Revoga acesso em <a href="https://myaccount.google.com/permissions" target="_blank">Google Permissions</a> e tenta novamente.
+                <strong>⚠️ AVISO:</strong> Refresh token não foi recebido.<br>
+                Isto acontece se já autorizaste antes. Revoga acesso em 
+                <a href="https://myaccount.google.com/permissions" target="_blank">Google Account Permissions</a>
+                e tenta novamente.
               </div>
             `}
-
-            <div class="instructions">
-              <h3>📋 Próximos passos:</h3>
-              <ol>
-                <li><strong>Copia</strong> o Refresh Token acima</li>
-                <li>Vai a: <a href="https://vercel.com/jarvisbodevs-projects/mission-control/settings/environment-variables" target="_blank">Vercel Environment Variables</a></li>
-                <li>Adiciona: <code>GOOGLE_REFRESH_TOKEN</code> = [token]</li>
-                <li>Clica <strong>Save</strong></li>
-                <li>✅ Dashboard mostra calendário!</li>
-              </ol>
-            </div>
           </div>
         </body>
       </html>
-      `,
-      {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      }
-    );
+    `;
+
+    return new NextResponse(html, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
   } catch (error: any) {
     console.error('OAuth callback error:', error);
-    return new NextResponse(
-      `
+    return new NextResponse(`
       <html>
-        <head><title>❌ Erro</title></head>
-        <body style="font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #0a0a0b; color: #fca5a5;">
+        <body style="font-family: sans-serif; background: #0a0a0b; color: #fca5a5; padding: 40px;">
           <h1>❌ Erro na Autorização</h1>
           <p>${error.message}</p>
           <p><a href="/api/google-auth" style="color: #3b82f6;">Tentar novamente</a></p>
         </body>
       </html>
-      `,
-      {
-        status: 500,
-        headers: { 'Content-Type': 'text/html' },
-      }
-    );
+    `, {
+      status: 500,
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
 }

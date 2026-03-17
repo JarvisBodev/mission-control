@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI || 'https://mission-control-roan-nine.vercel.app/api/google-callback'
+      process.env.GOOGLE_REDIRECT_URI || 'https://mission-control-36y9.vercel.app/api/google-callback'
     );
 
-    const scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
+    const scopes = [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/spreadsheets.readonly'
+    ];
 
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
