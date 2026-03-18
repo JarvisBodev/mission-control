@@ -1,51 +1,19 @@
 import { NextResponse } from 'next/server';
-import { google } from 'googleapis';
+import { fetchSheetData } from '@/lib/sheets-bridge';
 
 export const dynamic = 'force-dynamic';
 
-const SHEET_ID = '1jGna6XTDKh-siRwlNdZ-gWVpQ4Rx4s45MH33pHWDLSE';
-
-async function getSheets() {
-  if (!process.env.GOOGLE_REFRESH_TOKEN) {
-    throw new Error('Google not configured');
-  }
-
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
-  );
-
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-  });
-
-  return google.sheets({ version: 'v4', auth: oauth2Client });
-}
-
-async function fetchSheet(sheets: any, range: string): Promise<any[][]> {
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: range,
-    });
-    return response.data.values || [];
-  } catch (error) {
-    console.error(`Failed to fetch ${range}:`, error);
-    return [];
-  }
-}
-
 export async function GET() {
   try {
-    const sheets = await getSheets();
-
-    // Fetch data from correct tabs
+    // Fetch data from Google Sheets via gog CLI bridge
     const [masterInput, contratos, seguros] = await Promise.all([
-      fetchSheet(sheets, "MASTER_INPUT!A1:M15"),
-      fetchSheet(sheets, "EntradasSaídas!A1:N60"),
-      fetchSheet(sheets, "Seguros!A1:J25"),
+      fetchSheetData("MASTER_INPUT!A1:M15"),
+      fetchSheetData("EntradasSaídas!A1:N60"),
+      fetchSheetData("Seguros!A1:J25"),
     ]);
+
+    // Check if we got real data
+    const hasRealData = masterInput.length > 1 && contratos.length > 0;
 
     // Parse MASTER_INPUT (Portfolio)
     const apartamentos = masterInput.slice(1).filter(row => row && row[0] && !String(row[0]).includes('─')).map(row => ({
@@ -102,15 +70,13 @@ export async function GET() {
       validade: row[5],
     }));
 
-    // Fixed values
-    const opex = 6242;
-    const totalAssets = 11;
-    const operatingAssets = 8;
-    const totalQuartos = 35;
-
-    // If we got contracts, use real data
-    const quartosOcupados = contratosActivos.length > 0 ? contratosActivos.length : 35;
+    // Calculate totals from real data
+    const totalAssets = apartamentos.length || 11;
+    const operatingAssets = apartamentos.filter(a => a.status === 'Operacional').length || 8;
+    const totalQuartos = apartamentos.filter(a => a.status === 'Operacional').reduce((sum, a) => sum + a.quartos, 0) || 35;
+    const quartosOcupados = contratosActivos.length > 0 ? contratosActivos.length : totalQuartos;
     const receita = receitaTotal > 0 ? receitaTotal : 11900;
+    const opex = 6242; // Fixed for now
 
     // Contracts with pending items
     const contratosPendentes = contratosActivos.filter(row => {
@@ -159,6 +125,8 @@ export async function GET() {
     const margem = receita > 0 ? (cashflow / receita * 100) : 0;
 
     return NextResponse.json({
+      connected: hasRealData,
+      lastUpdate: new Date().toISOString(),
       summary: {
         totalApartamentos: totalAssets,
         operatingAssets: operatingAssets,
@@ -193,6 +161,7 @@ export async function GET() {
           .map(apt => ({
             id: apt.id,
             nome: apt.morada || apt.nome,
+            status: apt.status,
             previsao: apt.id === 'LOJA' ? '2027' : 'Setembro 2026',
             tipo: apt.id === 'FABRICA' ? 'Em Construção' : apt.id === 'LOJA' ? 'Por definir' : 'Arrendamento estudantes',
           })),
@@ -201,8 +170,10 @@ export async function GET() {
   } catch (error: any) {
     console.error('BINB API error:', error);
     
-    // Return fallback data if Google API fails
+    // Return fallback data if connection fails
     return NextResponse.json({
+      connected: false,
+      error: error.message || 'Connection failed',
       summary: {
         totalApartamentos: 11,
         operatingAssets: 8,
@@ -229,7 +200,6 @@ export async function GET() {
           { id: 'LOJA', nome: 'Loja 349', previsao: '2027', tipo: 'Por definir' },
         ],
       },
-      error: 'Using fallback data - Google Sheets connection failed',
     });
   }
 }
