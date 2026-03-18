@@ -55,17 +55,29 @@ const SectionCard = ({ label, value, unit, icon: Icon, color, onClick }: any) =>
 // --- OVERVIEW SECTION (Hybrid Dashboard) ---
 const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void }) => {
   const [binbData, setBinbData] = useState<any>(null);
+  const [gymData, setGymData] = useState<any>(null);
+  const [calendarData, setCalendarData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchOverviewData = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('/api/binb');
-      const data = await response.json();
-      setBinbData(data);
+      const [binbRes, gymRes, calendarRes] = await Promise.all([
+        fetch('/api/binb'),
+        fetch('/api/gym/workouts'),
+        fetch('/api/calendar')
+      ]);
+      const [binb, gym, calendar] = await Promise.all([
+        binbRes.json(),
+        gymRes.json(),
+        calendarRes.json()
+      ]);
+      setBinbData(binb);
+      setGymData(gym);
+      setCalendarData(calendar);
     } catch (error) {
-      console.error('Error fetching BINB data:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -104,62 +116,78 @@ const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void
         </button>
       </div>
 
-      {/* 1. KPIs EXECUTIVOS (Grid 4x) */}
-      <div>
-        <h2 className="text-xl font-bold text-zinc-300 mb-4 flex items-center gap-2">
-          <Activity size={20} className="text-blue-500" />
-          KPIs Críticos
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* BINB Cashflow */}
-          <SectionCard 
-            label="Cashflow BINB" 
-            value={loading ? "--" : `€${binbData?.summary?.cashflowMensal?.toLocaleString() || '0'}`}
-            unit="mensal"
-            icon={TrendingUp}
-            color="text-emerald-500"
-            onClick={() => setActiveTab('BINB')}
-          />
-          
-          {/* Occupancy Rate */}
-          <SectionCard 
-            label="Taxa Ocupação" 
-            value={loading ? "--" : `${binbData?.summary?.taxaOcupacao || 0}%`}
-            unit={`${binbData?.summary?.quartosOcupados || 0}/${binbData?.summary?.totalQuartos || 0} quartos`}
-            icon={Home}
-            color="text-blue-500"
-            onClick={() => setActiveTab('BINB')}
-          />
-          
-          {/* Urgent Alerts */}
-          <SectionCard 
-            label="Alertas Urgentes" 
-            value={totalAlerts}
-            unit={pendingContracts > 0 ? `${pendingContracts} contratos` : "tudo OK"}
-            icon={totalAlerts > 0 ? AlertTriangle : ShieldCheck}
-            color={totalAlerts > 0 ? "text-red-500" : "text-green-500"}
-            onClick={() => setActiveTab('BINB/Reminders')}
-          />
-          
-          {/* Next Event */}
-          <SectionCard 
-            label="Próximo Evento" 
-            value="9:00"
-            unit="Lourenço colégio"
-            icon={CalendarIcon}
-            color="text-purple-500"
-            onClick={() => setActiveTab('Personal/Calendar')}
-          />
-        </div>
+      {/* 1. QUICK ACTIONS + KEY METRICS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Alertas Urgentes */}
+        <SectionCard 
+          label="Alertas Urgentes" 
+          value={totalAlerts}
+          unit={totalAlerts > 0 ? "precisam atenção" : "tudo OK ✓"}
+          icon={totalAlerts > 0 ? AlertTriangle : ShieldCheck}
+          color={totalAlerts > 0 ? "text-red-500" : "text-emerald-500"}
+          onClick={() => setActiveTab('BINB')}
+        />
+        
+        {/* Próximo Evento */}
+        <SectionCard 
+          label="Próximo Evento" 
+          value={calendarData?.nextEvent?.time || '--:--'}
+          unit={calendarData?.nextEvent?.title || 'Sem eventos'}
+          icon={CalendarIcon}
+          color="text-purple-500"
+          onClick={() => setActiveTab('Personal/Calendar')}
+        />
+        
+        {/* Projetos Ativos */}
+        <SectionCard 
+          label="Projetos Ativos" 
+          value={binbData?.projetos?.emRemodelacao?.length || 0}
+          unit="em desenvolvimento"
+          icon={Hammer}
+          color="text-orange-500"
+          onClick={() => setActiveTab('BINB')}
+        />
+        
+        {/* Jarvis Status */}
+        <SectionCard 
+          label="Jarvis System" 
+          value="Online"
+          unit="operacional"
+          icon={Bot}
+          color="text-cyan-500"
+          onClick={() => setActiveTab('Jarvis')}
+        />
       </div>
 
-      {/* 2. SISTEMA DE ALERTA + 3. RESUMO ONE GLANCE (Side by Side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* LEFT: Sistema de Alerta Prioritário */}
+      {/* QUICK ACTIONS */}
+      <div className="flex flex-wrap gap-3">
+        <button 
+          onClick={() => setActiveTab('BINB')}
+          className="px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-semibold hover:bg-blue-500/20 transition-all flex items-center gap-2"
+        >
+          <Building2 size={16} /> Ver BINB
+        </button>
+        <button 
+          onClick={() => setActiveTab('Personal/Calendar')}
+          className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-semibold hover:bg-purple-500/20 transition-all flex items-center gap-2"
+        >
+          <CalendarIcon size={16} /> Calendário
+        </button>
+        <button 
+          onClick={() => setActiveTab('Jarvis')}
+          className="px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-semibold hover:bg-cyan-500/20 transition-all flex items-center gap-2"
+        >
+          <Bot size={16} /> Jarvis
+        </button>
+      </div>
+
+      {/* 2. ALERTAS URGENTES + PROJETOS (Side by Side) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* LEFT: Alertas que Precisam Atenção */}
         <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-          <h2 className="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
-            <Bell size={20} className="text-orange-500" />
-            Alertas do Dia
+          <h2 className="text-xl font-bold text-zinc-300 mb-4 flex items-center gap-2">
+            <AlertTriangle size={20} className="text-orange-500" />
+            Precisam da Tua Atenção
             {totalAlerts > 0 && (
               <span className="px-3 py-1 rounded-full text-xs font-black bg-red-500/20 text-red-400 border border-red-500/30 ml-2">
                 {totalAlerts}
@@ -167,158 +195,142 @@ const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void
             )}
           </h2>
           
-          <div className="space-y-4">
+          <div className="space-y-3 max-h-80 overflow-y-auto">
             {/* Seguros a Vencer */}
-            {binbData?.alertas?.segurosExpiring?.length > 0 ? (
-              <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-bold text-red-400 flex items-center gap-2">
-                    <AlertTriangle size={14} />
-                    Seguros a Vencer ({binbData.alertas.segurosExpiring.length})
+            {binbData?.alertas?.segurosExpiring?.map((s: any, i: number) => (
+              <div key={`seguro-${i}`} className="bg-red-500/5 border border-red-500/20 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/20">
+                    <ShieldCheck size={14} className="text-red-400" />
                   </div>
-                  <div className="text-xs text-red-400/70">Urgente</div>
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-200">Seguro {s.apartamento}</div>
+                    <div className="text-xs text-zinc-500">Expira: {s.validade}</div>
+                  </div>
                 </div>
-                <div className="text-sm text-zinc-400">
-                  {binbData.alertas.segurosExpiring.slice(0, 2).map((s: any, i: number) => (
-                    <div key={i} className="mt-1">• {s.apartamento}: {s.validade}</div>
-                  ))}
-                  {binbData.alertas.segurosExpiring.length > 2 && (
-                    <div className="mt-1 text-zinc-500">+{binbData.alertas.segurosExpiring.length - 2} mais</div>
-                  )}
-                </div>
+                <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400">Renovar</span>
               </div>
-            ) : (
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <CheckCircle size={14} />
-                  <span className="text-sm font-bold">Seguros: Todos renovados</span>
-                </div>
-              </div>
-            )}
+            ))}
 
             {/* Contratos Pendentes */}
-            {pendingContracts > 0 ? (
-              <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-bold text-orange-400 flex items-center gap-2">
-                    <FileText size={14} />
-                    Contratos Pendentes ({pendingContracts})
+            {binbData?.alertas?.contratosPendentes?.map((c: any, i: number) => (
+              <div key={`contrato-${i}`} className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-orange-500/20">
+                    <FileText size={14} className="text-orange-400" />
                   </div>
-                  <div className="text-xs text-orange-400/70">Ação necessária</div>
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-200">{c.nome}</div>
+                    <div className="text-xs text-zinc-500">
+                      {c.apartamento} • 
+                      {!c.depositoPago && ' Depósito'}
+                      {!c.renda1Mes && ' 1ªRenda'}
+                      {!c.contratoAssinado && ' Contrato'}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm text-zinc-400">
-                  {binbData.alertas.contratosPendentes.slice(0, 2).map((c: any, i: number) => (
-                    <div key={i} className="mt-1">• {c.nome} ({c.apartamento})</div>
-                  ))}
-                  {pendingContracts > 2 && (
-                    <div className="mt-1 text-zinc-500">+{pendingContracts - 2} mais</div>
-                  )}
-                </div>
+                <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">Pendente</span>
               </div>
-            ) : (
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <CheckCircle size={14} />
-                  <span className="text-sm font-bold">Contratos: Todos regularizados</span>
-                </div>
-              </div>
-            )}
+            ))}
 
             {/* Check-outs Próximos */}
-            {upcomingCheckouts > 0 && (
-              <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4">
-                <div className="text-sm font-bold text-blue-400 mb-1 flex items-center gap-2">
-                  <CalendarIcon size={14} />
-                  Check-outs Próximos ({upcomingCheckouts})
+            {binbData?.alertas?.upcomingCheckouts?.map((c: any, i: number) => (
+              <div key={`checkout-${i}`} className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/20">
+                    <CalendarIcon size={14} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-200">{c.nome}</div>
+                    <div className="text-xs text-zinc-500">{c.apartamento} • Check-out: {c.checkOut}</div>
+                  </div>
                 </div>
-                <div className="text-sm text-zinc-400">
-                  {binbData.alertas.upcomingCheckouts.slice(0, 2).map((c: any, i: number) => (
-                    <div key={i} className="mt-1">• {c.nome} ({c.checkOut})</div>
-                  ))}
+                <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">Saída</span>
+              </div>
+            ))}
+
+            {/* Eventos do Calendário (próxima semana) */}
+            {calendarData?.events?.slice(0, 3).map((e: any, i: number) => (
+              <div key={`event-${i}`} className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/20">
+                    <CalendarIcon size={14} className="text-purple-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-200">{e.summary}</div>
+                    <div className="text-xs text-zinc-500">{new Date(e.start).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
+                  </div>
                 </div>
+                <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">Evento</span>
+              </div>
+            ))}
+
+            {/* Tudo OK */}
+            {totalAlerts === 0 && (!calendarData?.events || calendarData.events.length === 0) && (
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-center">
+                <CheckCircle size={24} className="text-emerald-400 mx-auto mb-2" />
+                <div className="text-sm font-semibold text-emerald-400">Tudo em ordem!</div>
+                <div className="text-xs text-zinc-500 mt-1">Sem alertas pendentes</div>
               </div>
             )}
           </div>
         </div>
 
-        {/* RIGHT: Resumo One Glance */}
-        <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-          <h2 className="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
-            <Activity size={20} className="text-blue-500" />
-            Status do Sistema
-          </h2>
-          
-          <div className="space-y-6">
-            {/* BINB Status */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-bold text-zinc-300 flex items-center gap-2">
-                  <Building2 size={16} className="text-blue-500" />
-                  BINB - Gestão de Ativos
+        {/* RIGHT: Projetos & Sistema */}
+        <div className="space-y-6">
+          {/* Projetos em Desenvolvimento */}
+          <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+            <h2 className="text-xl font-bold text-zinc-300 mb-4 flex items-center gap-2">
+              <Hammer size={20} className="text-orange-500" />
+              Projetos em Desenvolvimento
+            </h2>
+            <div className="space-y-3">
+              {binbData?.projetos?.emRemodelacao?.length > 0 ? (
+                binbData.projetos.emRemodelacao.map((proj: any, i: number) => (
+                  <div key={i} className="bg-zinc-900/40 border border-white/5 rounded-xl p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-orange-500/20">
+                        <Hammer size={14} className="text-orange-400" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-zinc-200">{proj.id}</div>
+                        <div className="text-xs text-zinc-500">{proj.nome}</div>
+                      </div>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">{proj.previsao}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-zinc-500 py-4">
+                  <Hammer size={24} className="mx-auto mb-2 opacity-50" />
+                  <div className="text-sm">Sem projetos activos</div>
                 </div>
-                <div className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  {loading ? '--' : `${binbData?.summary?.operatingAssets || 0}/${binbData?.summary?.totalApartamentos || 0}`} ativos
-                </div>
-              </div>
-              <div className="text-sm text-zinc-400 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span>Cashflow mensal:</span>
-                  <span className="font-semibold text-emerald-400">€{binbData?.summary?.cashflowMensal?.toLocaleString() || '--'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Ocupação:</span>
-                  <span className="font-semibold text-blue-400">{binbData?.summary?.taxaOcupacao || '--'}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Projetos ativos:</span>
-                  <span className="font-semibold text-orange-400">{binbData?.projetos?.emRemodelacao?.length || 0} em desenvolvimento</span>
-                </div>
-              </div>
+              )}
             </div>
+          </div>
 
-            {/* Personal Status */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-bold text-zinc-300 flex items-center gap-2">
-                  <User size={16} className="text-purple-500" />
-                  Pessoal
-                </div>
-                <div className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                  2 eventos hoje
-                </div>
+          {/* Jarvis System Status */}
+          <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+            <h2 className="text-xl font-bold text-zinc-300 mb-4 flex items-center gap-2">
+              <Bot size={20} className="text-cyan-500" />
+              Jarvis System
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-zinc-900/40 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-emerald-400">✓</div>
+                <div className="text-xs text-zinc-500 mt-1">Gateway</div>
               </div>
-              <div className="text-sm text-zinc-400 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span>Próximo evento:</span>
-                  <span className="font-semibold">9:00 (Colégio)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Treinos este mês:</span>
-                  <span className="font-semibold text-emerald-400">7 (Março)</span>
-                </div>
+              <div className="bg-zinc-900/40 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-emerald-400">✓</div>
+                <div className="text-xs text-zinc-500 mt-1">APIs</div>
               </div>
-            </div>
-
-            {/* System Status */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-bold text-zinc-300 flex items-center gap-2">
-                  <Bot size={16} className="text-cyan-500" />
-                  Jarvis System
-                </div>
-                <div className="px-3 py-1 rounded-full text-xs font-black bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  ✅ Operacional
-                </div>
+              <div className="bg-zinc-900/40 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-blue-400">{binbData?.summary?.operatingAssets || 0}</div>
+                <div className="text-xs text-zinc-500 mt-1">Ativos BINB</div>
               </div>
-              <div className="text-sm text-zinc-400 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span>API BINB:</span>
-                  <span className="font-semibold text-emerald-400">{loading ? 'Carregando...' : '✅ Conectada'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Dados atualizados:</span>
-                  <span className="font-semibold">há 5 min</span>
-                </div>
+              <div className="bg-zinc-900/40 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-purple-400">{gymData?.stats?.marchWorkouts || 0}</div>
+                <div className="text-xs text-zinc-500 mt-1">Treinos Março</div>
               </div>
             </div>
           </div>

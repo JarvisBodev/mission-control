@@ -62,10 +62,31 @@ export async function GET(request: NextRequest) {
       return eventStart > now;
     });
 
+    // Count today's events
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayEvents = events.filter((event) => {
+      if (!event.start) return false;
+      const eventStart = new Date(event.start);
+      return eventStart >= today && eventStart < tomorrow;
+    });
+
+    // Get next event
+    const nextEvent = futureEvents[0] ? {
+      title: futureEvents[0].summary,
+      time: futureEvents[0].start ? new Date(futureEvents[0].start).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+      start: futureEvents[0].start
+    } : null;
+
     return NextResponse.json({
       events: futureEvents,
       configured: true,
       count: futureEvents.length,
+      todayCount: todayEvents.length,
+      nextEvent,
     });
   } catch (error: any) {
     console.error('Calendar API error:', error);
