@@ -8,7 +8,8 @@ import {
   Calendar as CalendarIcon, Clock, Trash2, CheckCircle2, Circle,
   Terminal, RefreshCw, HardDrive, ChevronLeft, Bot, User, Target,
   TrendingUp, Home, Building2, Heart, Search, Hammer, Calculator, Plane, Eraser,
-  BarChart3, ChevronDown, PieChart, Power, Dumbbell, Bell, AlertTriangle, Flag, CheckCircle
+  BarChart3, ChevronDown, PieChart, Power, Dumbbell, Bell, AlertTriangle, Flag, CheckCircle,
+  CloudSun, Droplets, Wind, Thermometer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalendarEvents from '@/components/ui/CalendarEvents';
@@ -57,25 +58,29 @@ const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void
   const [binbData, setBinbData] = useState<any>(null);
   const [gymData, setGymData] = useState<any>(null);
   const [calendarData, setCalendarData] = useState<any>(null);
+  const [weatherData, setWeatherData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchOverviewData = async () => {
     setRefreshing(true);
     try {
-      const [binbRes, gymRes, calendarRes] = await Promise.all([
+      const [binbRes, gymRes, calendarRes, weatherRes] = await Promise.all([
         fetch('/api/binb'),
         fetch('/api/gym/workouts'),
-        fetch('/api/calendar')
+        fetch('/api/calendar'),
+        fetch('/api/weather?city=Braga')
       ]);
-      const [binb, gym, calendar] = await Promise.all([
+      const [binb, gym, calendar, weather] = await Promise.all([
         binbRes.json(),
         gymRes.json(),
-        calendarRes.json()
+        calendarRes.json(),
+        weatherRes.json().catch(() => null)
       ]);
       setBinbData(binb);
       setGymData(gym);
       setCalendarData(calendar);
+      setWeatherData(weather);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -116,47 +121,70 @@ const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void
         </button>
       </div>
 
-      {/* 1. QUICK ACTIONS + KEY METRICS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Alertas Urgentes */}
-        <SectionCard 
-          label="Alertas Urgentes" 
-          value={totalAlerts}
-          unit={totalAlerts > 0 ? "precisam atenção" : "tudo OK ✓"}
-          icon={totalAlerts > 0 ? AlertTriangle : ShieldCheck}
-          color={totalAlerts > 0 ? "text-red-500" : "text-emerald-500"}
-          onClick={() => setActiveTab('BINB')}
-        />
-        
-        {/* Próximo Evento */}
-        <SectionCard 
-          label="Próximo Evento" 
-          value={calendarData?.nextEvent?.time || '--:--'}
-          unit={calendarData?.nextEvent?.title || 'Sem eventos'}
-          icon={CalendarIcon}
-          color="text-purple-500"
-          onClick={() => setActiveTab('Personal/Calendar')}
-        />
-        
-        {/* Projetos Ativos */}
-        <SectionCard 
-          label="Projetos Ativos" 
-          value={binbData?.projetos?.emRemodelacao?.length || 0}
-          unit="em desenvolvimento"
-          icon={Hammer}
-          color="text-orange-500"
-          onClick={() => setActiveTab('BINB')}
-        />
-        
-        {/* Jarvis Status */}
-        <SectionCard 
-          label="Jarvis System" 
-          value="Online"
-          unit="operacional"
-          icon={Bot}
-          color="text-cyan-500"
-          onClick={() => setActiveTab('Jarvis')}
-        />
+      {/* 1. MÉTÉO + QUICK STATS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Weather Card */}
+        <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CloudSun size={20} className="text-blue-400" />
+              <span className="text-sm font-semibold text-zinc-300">Braga</span>
+            </div>
+            <span className="text-xs text-zinc-500">Agora</span>
+          </div>
+          {weatherData?.temperature !== null ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-4xl font-bold text-white">{weatherData?.temperature}°</div>
+                <div className="text-sm text-zinc-400 mt-1">{weatherData?.description}</div>
+              </div>
+              <div className="text-right text-xs text-zinc-500 space-y-1">
+                <div className="flex items-center gap-1 justify-end">
+                  <Thermometer size={12} /> {weatherData?.maxTemp}° / {weatherData?.minTemp}°
+                </div>
+                <div className="flex items-center gap-1 justify-end">
+                  <Droplets size={12} /> {weatherData?.chanceOfRain}% chuva
+                </div>
+                <div className="flex items-center gap-1 justify-end">
+                  <Wind size={12} /> {weatherData?.windSpeed} km/h
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-zinc-500 text-sm">A carregar météo...</div>
+          )}
+        </div>
+
+        {/* Alertas Card */}
+        <div className={`border rounded-2xl p-5 ${totalAlerts > 0 ? 'bg-red-500/5 border-red-500/20' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
+          <div className="flex items-center gap-2 mb-3">
+            {totalAlerts > 0 ? <AlertTriangle size={20} className="text-red-400" /> : <ShieldCheck size={20} className="text-emerald-400" />}
+            <span className="text-sm font-semibold text-zinc-300">Alertas</span>
+          </div>
+          <div className="text-4xl font-bold text-white">{totalAlerts}</div>
+          <div className="text-sm text-zinc-400 mt-1">
+            {totalAlerts > 0 ? 'precisam da tua atenção' : 'Tudo em ordem ✓'}
+          </div>
+        </div>
+
+        {/* Projetos Card */}
+        <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Hammer size={20} className="text-orange-400" />
+            <span className="text-sm font-semibold text-zinc-300">Projetos</span>
+          </div>
+          <div className="text-4xl font-bold text-white">{binbData?.projetos?.emRemodelacao?.length || 0}</div>
+          <div className="text-sm text-zinc-400 mt-1">em desenvolvimento</div>
+        </div>
+      </div>
+
+      {/* 2. LEMBRETES & COMPROMISSOS */}
+      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+        <h2 className="text-xl font-bold text-zinc-300 mb-4 flex items-center gap-2">
+          <Bell size={20} className="text-purple-500" />
+          Lembretes & Compromissos
+        </h2>
+        <RemindersPanel />
       </div>
 
       {/* QUICK ACTIONS */}
@@ -335,15 +363,6 @@ const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Reminders & Quick Add Section */}
-      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
-        <h2 className="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
-          <Bell size={20} className="text-purple-500" />
-          Lembretes & Compromissos
-        </h2>
-        <RemindersPanel />
       </div>
 
       {/* Motto/Quote Footer */}
