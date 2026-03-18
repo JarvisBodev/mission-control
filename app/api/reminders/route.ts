@@ -64,15 +64,31 @@ export async function GET() {
     // Also fetch Google Calendar events if available
     let calendarEvents: any[] = [];
     try {
-      const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog calendar list --from today --to "+7d" --json 2>/dev/null`;
+      const now = new Date();
+      const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const fromDate = now.toISOString().split('T')[0];
+      const toDate = sevenDaysLater.toISOString().split('T')[0];
+      
+      const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog calendar list --from "${fromDate}" --to "${toDate}" --json`;
+      
+      console.log('Fetching calendar events with command:', cmd);
+      
       const result = execSync(cmd, { 
         encoding: 'utf-8', 
         timeout: 15000,
-        env: { ...process.env, HOME: '/home/ubuntu' }
+        env: { 
+          ...process.env, 
+          HOME: '/home/ubuntu',
+          GOG_KEYRING_PASSWORD: 'filipe',
+          PATH: process.env.PATH
+        }
       });
+      
       const data = JSON.parse(result);
       calendarEvents = data.events || [];
-    } catch (e) {
+      console.log(`Found ${calendarEvents.length} calendar events`);
+    } catch (e: any) {
+      console.error('Failed to fetch Google Calendar events:', e.message);
       // Calendar not available, continue without
     }
 
@@ -117,15 +133,23 @@ export async function POST(request: Request) {
       if (type === 'appointment' && dueDate) {
         try {
           const startTime = dueTime ? `${dueDate}T${dueTime}:00` : dueDate;
-          const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog calendar add "${title}" --when "${startTime}" ${description ? `--description "${description}"` : ''} 2>/dev/null`;
+          const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog calendar add "${title}" --when "${startTime}" ${description ? `--description "${description}"` : ''}`;
+          
+          console.log('Adding to calendar with command:', cmd);
+          
           execSync(cmd, { 
             encoding: 'utf-8', 
             timeout: 15000,
-            env: { ...process.env, HOME: '/home/ubuntu' }
+            env: { 
+              ...process.env, 
+              HOME: '/home/ubuntu',
+              GOG_KEYRING_PASSWORD: 'filipe',
+              PATH: process.env.PATH
+            }
           });
-        } catch (e) {
+        } catch (e: any) {
           // Calendar add failed, but reminder still saved
-          console.log('Failed to add to Google Calendar');
+          console.error('Failed to add to Google Calendar:', e.message);
         }
       }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { google } from 'googleapis';
+import { execSync } from 'child_process';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,54 +8,53 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get('days') || '7', 10);
 
-    if (!process.env.GOOGLE_REFRESH_TOKEN) {
-      return NextResponse.json(
-        { 
-          error: 'Calendar not configured. Visit /api/calendar/google/auth to authorize.',
-          configured: false,
-          events: [],
-        },
-        { status: 200 } // Return 200 to avoid breaking UI
-      );
+    // Use gog CLI to fetch calendar events
+    const now = new Date();
+    const timeMax = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    
+    // Format dates for gog: YYYY-MM-DD
+    const fromDate = now.toISOString().split('T')[0];
+    const toDate = timeMax.toISOString().split('T')[0];
+
+    let gogEvents: any[] = [];
+    try {
+      const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog calendar events --from "${fromDate}" --to "${toDate}" --json 2>/dev/null`;
+      const result = execSync(cmd, { 
+        encoding: 'utf-8', 
+        timeout: 15000,
+        env: { ...process.env, HOME: '/home/ubuntu' }
+      });
+      const data = JSON.parse(result);
+      gogEvents = data.events || [];
+    } catch (e: any) {
+      console.error('Gog calendar error:', e.message);
+      // Return empty but configured
+      return NextResponse.json({
+        events: [],
+        configured: true, // We're configured (gog is available), just no events
+        count: 0,
+        todayCount: 0,
+        nextEvent: null,
+      });
     }
 
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
-    );
-
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+    // Transform gog events to our format
+    const events = gogEvents.map((event: any) => {
+      const start = event.start?.dateTime || event.start?.date;
+      const end = event.end?.dateTime || event.end?.date;
+      return {
+        id: event.id,
+        summary: event.summary || 'Sem título',
+        description: event.description || '',
+        start,
+        end,
+        location: event.location || '',
+        attendees: event.attendees?.map((a: any) => a.email) || [],
+        isAllDay: !event.start?.dateTime,
+      };
     });
 
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-
-    const now = new Date();
-    const timeMin = now.toISOString();
-    const timeMax = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-
-    const response = await calendar.events.list({
-      calendarId: 'primary',
-      timeMin,
-      timeMax,
-      maxResults: 50,
-      singleEvents: true,
-      orderBy: 'startTime',
-    });
-
-    const events = response.data.items?.map((event) => ({
-      id: event.id,
-      summary: event.summary || 'Sem título',
-      description: event.description || '',
-      start: event.start?.dateTime || event.start?.date,
-      end: event.end?.dateTime || event.end?.date,
-      location: event.location || '',
-      attendees: event.attendees?.map((a) => a.email) || [],
-      isAllDay: !event.start?.dateTime,
-    })) || [];
-
-    // Filter out past events
+    // Filter out past events (just in case)
     const futureEvents = events.filter((event) => {
       if (!event.start) return false;
       const eventStart = new Date(event.start);
@@ -93,7 +92,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         error: error.message,
-        configured: !!process.env.GOOGLE_REFRESH_TOKEN,
+        configured: false,
         events: [],
       },
       { status: 500 }

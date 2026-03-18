@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 
 export const dynamic = 'force-dynamic';
 
@@ -187,60 +188,56 @@ export async function GET() {
       };
     }
 
-    // 2. Calendar Events (use Google Calendar API directly)
+    // 2. Calendar Events (use gog CLI)
     let calendarEvents: any[] = [];
     let calendarConfigured = false;
     
-    if (process.env.GOOGLE_REFRESH_TOKEN) {
-      try {
-        const { google } = await import('googleapis');
-        
-        const oauth2Client = new google.auth.OAuth2(
-          process.env.GOOGLE_CLIENT_ID,
-          process.env.GOOGLE_CLIENT_SECRET,
-          process.env.GOOGLE_REDIRECT_URI
-        );
-
-        oauth2Client.setCredentials({
-          refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-        });
-
-        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-
-        const now = new Date();
-        const timeMin = now.toISOString();
-        const timeMax = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-        const response = await calendar.events.list({
-          calendarId: 'primary',
-          timeMin,
-          timeMax,
-          maxResults: 50,
-          singleEvents: true,
-          orderBy: 'startTime',
-        });
-
-        calendarEvents = response.data.items?.map((event) => ({
-          id: event.id,
-          summary: event.summary || 'Sem título',
-          description: event.description || '',
-          start: event.start?.dateTime || event.start?.date,
-          end: event.end?.dateTime || event.end?.date,
-          location: event.location || '',
-          attendees: event.attendees?.map((a) => a.email) || [],
-          isAllDay: !event.start?.dateTime,
-        })).filter((event) => {
-          if (!event.start) return false;
-          const eventStart = new Date(event.start);
-          return eventStart > now;
-        }) || [];
-        
-        calendarConfigured = true;
-      } catch (calendarError) {
-        console.error('Calendar fetch error:', calendarError);
-        calendarEvents = [];
-        calendarConfigured = false;
-      }
+    try {
+      const now = new Date();
+      const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const fromDate = now.toISOString().split('T')[0];
+      const toDate = sevenDaysLater.toISOString().split('T')[0];
+      
+      const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog calendar events --from "${fromDate}" --to "${toDate}" --json`;
+      
+      console.log('Fetching calendar events for Personal API with command:', cmd);
+      
+      const result = execSync(cmd, { 
+        encoding: 'utf-8', 
+        timeout: 15000,
+        env: { 
+          ...process.env, 
+          HOME: '/home/ubuntu',
+          GOG_KEYRING_PASSWORD: 'filipe',
+          PATH: process.env.PATH
+        }
+      });
+      
+      const data = JSON.parse(result);
+      const gogEvents = data.events || [];
+      
+      // Transform gog events to our format
+      calendarEvents = gogEvents.map((event: any) => ({
+        id: event.id,
+        summary: event.summary || 'Sem título',
+        description: event.description || '',
+        start: event.start?.dateTime || event.start?.date,
+        end: event.end?.dateTime || event.end?.date,
+        location: event.location || '',
+        attendees: event.attendees?.map((a: any) => a.email) || [],
+        isAllDay: !event.start?.dateTime,
+      })).filter((event: any) => {
+        if (!event.start) return false;
+        const eventStart = new Date(event.start);
+        return eventStart > now;
+      });
+      
+      calendarConfigured = true;
+      console.log(`Personal API found ${calendarEvents.length} calendar events`);
+    } catch (calendarError: any) {
+      console.error('Calendar fetch error in Personal API:', calendarError.message);
+      calendarEvents = [];
+      calendarConfigured = false;
     }
 
     // 3. Quick Stats
