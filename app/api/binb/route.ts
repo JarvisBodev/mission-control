@@ -8,9 +8,9 @@ export async function GET() {
     // Fetch data from Google Sheets via gog CLI bridge
     const [masterInput, contratos, seguros, reservasData] = await Promise.all([
       fetchSheetData("MASTER_INPUT!A1:M15"),
-      fetchSheetData("EntradasSaídas!A1:N70"),
+      fetchSheetData("EntradasSaídas!A1:N55"),
       fetchSheetData("Seguros!A1:J25"),
-      fetchSheetData("EntradasSaídas!A56:N70"), // Reservas section
+      fetchSheetData("Reservas 2627!A1:N20"), // Reservas in separate sheet
     ]);
 
     // Check if we got real data
