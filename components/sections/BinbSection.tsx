@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { 
   Building2, Users, TrendingUp, AlertTriangle, Calendar, 
   CheckCircle, XCircle, RefreshCw, Home, Euro, PieChart,
-  Clock, FileText, Hammer, ChevronDown, ChevronRight
+  Clock, FileText, Hammer, ChevronDown, ChevronRight, Edit2, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import EditModal from '@/components/ui/EditModal';
 
 interface BinbData {
   summary: {
@@ -115,6 +116,55 @@ export default function BinbSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedApt, setExpandedApt] = useState<string | null>(null);
+  
+  // Edit modal state
+  const [editModal, setEditModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    fields: any[];
+    onSave: (values: any) => Promise<{ success: boolean; message: string }>;
+  }>({ isOpen: false, title: '', fields: [], onSave: async () => ({ success: false, message: '' }) });
+
+  // API update function
+  const updateBinb = async (action: string, data: any) => {
+    try {
+      const response = await fetch('/api/binb/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, data })
+      });
+      const result = await response.json();
+      if (result.success) {
+        // Refresh data after successful update
+        await fetchData();
+      }
+      return result;
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Update failed' };
+    }
+  };
+
+  // Open edit modal for contract pending items
+  const openMarkPaidModal = (contract: any, field: string) => {
+    const fieldLabels: Record<string, string> = {
+      deposit: 'Depósito Pago',
+      firstMonth: '1ª Renda Paga',
+      signed: 'Contrato Assinado'
+    };
+    setEditModal({
+      isOpen: true,
+      title: `Marcar como Completo`,
+      fields: [
+        { name: 'confirm', label: `Confirmar: ${fieldLabels[field]} para ${contract.nome}?`, type: 'select', value: 'yes', options: [{ value: 'yes', label: 'Sim, confirmar' }, { value: 'no', label: 'Não' }] }
+      ],
+      onSave: async (values) => {
+        if (values.confirm === 'yes') {
+          return await updateBinb('mark_paid', { contractId: `C${contract.apartamento}_${contract.quarto}`, field });
+        }
+        return { success: false, message: 'Cancelado' };
+      }
+    });
+  };
 
   const fetchData = async () => {
     try {
@@ -224,22 +274,58 @@ export default function BinbSection() {
 
       {/* Alerts Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <AlertCard
-          title="Contratos Pendentes"
-          icon={FileText}
-          color="text-red-500"
-          emptyText="Todos os contratos estão completos"
-          items={alertas.contratosPendentes.map(c => (
-            <div key={`${c.apartamento}-${c.quarto}`} className="flex justify-between items-center">
-              <span className="font-medium">{c.nome}</span>
-              <div className="flex gap-1">
-                {!c.depositoPago && <span className="text-red-400 text-[10px] bg-red-500/20 px-1.5 py-0.5 rounded">Depósito</span>}
-                {!c.renda1Mes && <span className="text-amber-400 text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded">1ª Renda</span>}
-                {!c.contratoAssinado && <span className="text-blue-400 text-[10px] bg-blue-500/20 px-1.5 py-0.5 rounded">Contrato</span>}
-              </div>
+        {/* Contratos Pendentes - Interactive */}
+        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <FileText size={16} className="text-red-500" />
+            <span className="text-sm font-semibold">Contratos Pendentes</span>
+            {alertas.contratosPendentes.length > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">
+                {alertas.contratosPendentes.length}
+              </span>
+            )}
+          </div>
+          {alertas.contratosPendentes.length === 0 ? (
+            <p className="text-zinc-600 text-xs">Todos os contratos estão completos ✓</p>
+          ) : (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {alertas.contratosPendentes.map(c => (
+                <div key={`${c.apartamento}-${c.quarto}`} className="bg-black/20 rounded-lg p-2 text-xs">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{c.nome}</span>
+                    <span className="text-zinc-500">{c.apartamento}</span>
+                  </div>
+                  <div className="flex gap-1 flex-wrap">
+                    {!c.depositoPago && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openMarkPaidModal(c, 'deposit'); }}
+                        className="text-red-400 text-[10px] bg-red-500/20 px-2 py-1 rounded hover:bg-red-500/30 transition-colors flex items-center gap-1"
+                      >
+                        <Check size={10} /> Depósito
+                      </button>
+                    )}
+                    {!c.renda1Mes && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openMarkPaidModal(c, 'firstMonth'); }}
+                        className="text-amber-400 text-[10px] bg-amber-500/20 px-2 py-1 rounded hover:bg-amber-500/30 transition-colors flex items-center gap-1"
+                      >
+                        <Check size={10} /> 1ª Renda
+                      </button>
+                    )}
+                    {!c.contratoAssinado && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openMarkPaidModal(c, 'signed'); }}
+                        className="text-blue-400 text-[10px] bg-blue-500/20 px-2 py-1 rounded hover:bg-blue-500/30 transition-colors flex items-center gap-1"
+                      >
+                        <Check size={10} /> Contrato
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        />
+          )}
+        </div>
         <AlertCard
           title="Check-outs (30 dias)"
           icon={Calendar}
@@ -366,6 +452,15 @@ export default function BinbSection() {
           ))}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <EditModal
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ ...editModal, isOpen: false })}
+        title={editModal.title}
+        fields={editModal.fields}
+        onSave={editModal.onSave}
+      />
     </div>
   );
 }

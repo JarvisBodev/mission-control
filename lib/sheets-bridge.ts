@@ -21,7 +21,26 @@ export async function fetchSheetData(range: string): Promise<any[][]> {
 export async function updateSheetData(range: string, values: any[][]): Promise<boolean> {
   try {
     const valuesJson = JSON.stringify(values);
-    const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog sheets update ${SHEET_ID} "${range}" --values-json '${valuesJson}'`;
+    // Escape single quotes in JSON for bash
+    const escapedJson = valuesJson.replace(/'/g, "'\\''");
+    const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog sheets update ${SHEET_ID} "${range}" --values-json '${escapedJson}'`;
+    execSync(cmd, { 
+      encoding: 'utf-8',
+      timeout: 30000,
+      env: { ...process.env, HOME: '/home/ubuntu' }
+    });
+    return true;
+  } catch (error: any) {
+    console.error(`Failed to update ${range}:`, error.message);
+    return false;
+  }
+}
+
+export async function updateSingleCell(range: string, value: string | number): Promise<boolean> {
+  try {
+    const valueStr = String(value);
+    // Use -- to handle negative numbers
+    const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog sheets update ${SHEET_ID} "${range}" -- ${valueStr}`;
     execSync(cmd, { 
       encoding: 'utf-8',
       timeout: 30000,
