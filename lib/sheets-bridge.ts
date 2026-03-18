@@ -2,7 +2,16 @@ import { execSync } from 'child_process';
 
 const SHEET_ID = '1jGna6XTDKh-siRwlNdZ-gWVpQ4Rx4s45MH33pHWDLSE';
 
+// Check if running on Vercel (serverless)
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
+
 export async function fetchSheetData(range: string): Promise<any[][]> {
+  // If on Vercel, return empty (APIs won't work without gog CLI)
+  if (isVercel) {
+    console.log(`Vercel environment detected, skipping gog CLI for ${range}`);
+    return [];
+  }
+  
   try {
     const cmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com gog sheets get ${SHEET_ID} "${range}" --json`;
     const result = execSync(cmd, { 

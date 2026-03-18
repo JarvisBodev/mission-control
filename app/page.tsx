@@ -15,6 +15,7 @@ import CalendarEvents from '@/components/ui/CalendarEvents';
 import JarvisSection from '@/components/sections/JarvisSection';
 import PersonalSection from '@/components/sections/PersonalSection';
 import BinbSection from '@/components/sections/BinbSection';
+import RemindersPanel from '@/components/ui/RemindersPanel';
 
 // --- TYPES ---
 interface SidebarItemProps {
@@ -322,6 +323,15 @@ const OverviewSection = ({ setActiveTab }: { setActiveTab: (tab: string) => void
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Reminders & Quick Add Section */}
+      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+        <h2 className="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+          <Bell size={20} className="text-purple-500" />
+          Lembretes & Compromissos
+        </h2>
+        <RemindersPanel />
       </div>
 
       {/* Motto/Quote Footer */}
