@@ -656,6 +656,125 @@ const FamilySection = () => (
   </div>
 );
 
+const BinbReservasSection = () => {
+  const [reservas, setReservas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/binb')
+      .then(res => res.json())
+      .then(data => {
+        setReservas(data.reservas || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const getStatusColor = (status: string, depositoPago: boolean) => {
+    if (depositoPago) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+    if (status === 'Pendente') return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    if (status === 'Cancelada') return 'bg-red-500/20 text-red-400 border-red-500/30';
+    return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-black uppercase tracking-widest text-blue-500">Reservas</h2>
+        <div className="text-sm text-zinc-400">
+          <span className="text-blue-400 font-bold">{reservas.length}</span> reservas activas
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-zinc-900/40 border border-white/5 p-5 rounded-2xl">
+          <div className="text-zinc-500 text-xs uppercase font-black tracking-widest mb-2">Total Reservas</div>
+          <div className="text-3xl font-bold">{reservas.length}</div>
+        </div>
+        <div className="bg-zinc-900/40 border border-white/5 p-5 rounded-2xl">
+          <div className="text-zinc-500 text-xs uppercase font-black tracking-widest mb-2">Depósitos Pendentes</div>
+          <div className="text-3xl font-bold text-amber-400">{reservas.filter(r => !r.depositoPago).length}</div>
+        </div>
+        <div className="bg-zinc-900/40 border border-white/5 p-5 rounded-2xl">
+          <div className="text-zinc-500 text-xs uppercase font-black tracking-widest mb-2">Valor Total Reservado</div>
+          <div className="text-3xl font-bold text-emerald-400">€{reservas.reduce((sum, r) => sum + (r.valorTotal || 0), 0).toLocaleString()}</div>
+        </div>
+      </div>
+
+      {/* Reservations List */}
+      <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6">
+        <h3 className="text-xl font-semibold text-zinc-300 mb-6">Lista de Reservas</h3>
+        {loading ? (
+          <div className="text-center py-8 text-zinc-500">A carregar...</div>
+        ) : reservas.length === 0 ? (
+          <div className="text-center py-8 text-zinc-500">Sem reservas activas</div>
+        ) : (
+          <div className="space-y-4">
+            {reservas.map((reserva, idx) => (
+              <div 
+                key={reserva.id || idx}
+                className="bg-zinc-900/40 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="text-xl font-bold text-zinc-200">{reserva.nome}</div>
+                    <div className="text-sm text-zinc-500 mt-1">
+                      Apt {reserva.apartamento} • {reserva.quartos} quartos • {reserva.email}
+                    </div>
+                  </div>
+                  <div className={`px-4 py-2 rounded-full text-sm font-bold border ${getStatusColor(reserva.status, reserva.depositoPago)}`}>
+                    {reserva.depositoPago ? '✓ Confirmada' : reserva.status}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-zinc-500">Check-in</div>
+                    <div className="font-semibold">{formatDate(reserva.inicio)}</div>
+                  </div>
+                  <div>
+                    <div className="text-zinc-500">Check-out</div>
+                    <div className="font-semibold">{formatDate(reserva.fim)}</div>
+                  </div>
+                  <div>
+                    <div className="text-zinc-500">Renda Mensal</div>
+                    <div className="font-semibold text-emerald-400">€{reserva.rendaMensal?.toLocaleString() || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-zinc-500">Valor Total</div>
+                    <div className="font-semibold text-blue-400">€{reserva.valorTotal?.toLocaleString() || 'N/A'}</div>
+                  </div>
+                </div>
+
+                {!reserva.depositoPago && reserva.depositoDeadline && (
+                  <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
+                      <AlertTriangle size={16} />
+                      Depósito pendente até {formatDate(reserva.depositoDeadline)}
+                    </div>
+                  </div>
+                )}
+
+                {reserva.notas && (
+                  <div className="mt-3 text-xs text-zinc-500">
+                    📝 {reserva.notas}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const BinbRemindersSection = () => {
   const reminders = [
     { id: 1, title: 'Máquina de lavar', code: '223', description: 'Verificar/Reparar máquina de lavar' },
@@ -814,6 +933,12 @@ export default function MissionControl() {
              {expandedBinb && (
                <div className="ml-4 pl-2 border-l border-white/5 space-y-1 mt-1">
                  <SidebarItem 
+                   icon={CalendarIcon} 
+                   label="Reservas" 
+                   active={activeTab === 'BINB/Reservas'} 
+                   onClick={() => {setActiveTab('BINB/Reservas'); setSelectedFile(null);}}
+                 />
+                 <SidebarItem 
                    icon={Bell} 
                    label="Lembretes" 
                    active={activeTab === 'BINB/Reminders'} 
@@ -896,6 +1021,7 @@ export default function MissionControl() {
              <h1 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-400">
                {selectedFile ? "DOCUMENT VIEW" : 
                 activeTab === 'BINB' ? 'BINB - Asset Management' :
+                activeTab === 'BINB/Reservas' ? 'BINB - Reservas' :
                 activeTab === 'BINB/Reminders' ? 'BINB - Lembretes' :
                 activeTab === 'Personal' ? 'Pessoal' : 
                 activeTab === 'Personal/Gym' ? 'Ginásio' :
@@ -917,6 +1043,8 @@ export default function MissionControl() {
               </motion.div>
             ) : activeTab === 'BINB' ? (
               <BinbSection />
+            ) : activeTab === 'BINB/Reservas' ? (
+              <BinbReservasSection />
             ) : activeTab === 'BINB/Reminders' ? (
               <BinbRemindersSection />
             ) : activeTab === 'Personal' ? (

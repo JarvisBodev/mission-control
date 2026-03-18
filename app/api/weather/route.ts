@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     // Using wttr.in for simple weather (no API key needed)
     const response = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`, {
       headers: { 'User-Agent': 'curl/7.68.0' },
-      next: { revalidate: 1800 } // Cache for 30 minutes
+      cache: 'no-store'
     });
     
     if (!response.ok) {
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    const current = data.current_condition?.[0];
-    const today = data.weather?.[0];
+    const current = data.data?.current_condition?.[0] || data.current_condition?.[0];
+    const today = data.data?.weather?.[0] || data.weather?.[0];
     
     if (!current) {
       throw new Error('No weather data');

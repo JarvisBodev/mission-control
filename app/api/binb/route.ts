@@ -6,10 +6,11 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     // Fetch data from Google Sheets via gog CLI bridge
-    const [masterInput, contratos, seguros] = await Promise.all([
+    const [masterInput, contratos, seguros, reservasData] = await Promise.all([
       fetchSheetData("MASTER_INPUT!A1:M15"),
-      fetchSheetData("EntradasSaídas!A1:N60"),
+      fetchSheetData("EntradasSaídas!A1:N70"),
       fetchSheetData("Seguros!A1:J25"),
+      fetchSheetData("EntradasSaídas!A56:N70"), // Reservas section
     ]);
 
     // Check if we got real data
@@ -166,6 +167,24 @@ export async function GET() {
             tipo: apt.id === 'FABRICA' ? 'Em Construção' : apt.id === 'LOJA' ? 'Por definir' : 'Arrendamento estudantes',
           })),
       },
+      // Parse reservas (rows after header)
+      reservas: reservasData.slice(1).filter(row => row && row[0] && row[0] !== '' && !row[0].includes('==='))
+        .map(row => ({
+          id: row[0],
+          apartamento: row[1],
+          unidade: row[2],
+          nome: row[3],
+          email: row[4],
+          inicio: row[5],
+          fim: row[6],
+          quartos: parseInt(row[7]) || 1,
+          depositoDeadline: row[8],
+          depositoPago: row[9] === 'TRUE',
+          status: row[10] || 'Pendente',
+          rendaMensal: parseFloat(String(row[11] || '0').replace(',', '.')) || 0,
+          valorTotal: parseFloat(String(row[12] || '0').replace(',', '.')) || 0,
+          notas: row[13] || '',
+        })),
     });
   } catch (error: any) {
     console.error('BINB API error:', error);
@@ -200,6 +219,7 @@ export async function GET() {
           { id: 'LOJA', nome: 'Loja 349', previsao: '2027', tipo: 'Por definir' },
         ],
       },
+      reservas: [],
     });
   }
 }
