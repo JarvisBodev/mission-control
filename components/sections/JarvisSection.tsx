@@ -200,11 +200,11 @@ export default function JarvisSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <SectionCard 
           label="Gateway Status" 
-          value={data.gateway.status === 'online' ? 'Online' : 'Offline'} 
+          value={data.gateway.reachable ? 'Online' : data.gateway.service?.includes('activating') ? 'Starting...' : 'Offline'} 
           unit={data.gateway.latency ? `${data.gateway.latency}ms` : ''}
-          icon={data.gateway.status === 'online' ? CheckCircle : XCircle}
-          color={data.gateway.status === 'online' ? 'text-emerald-500' : 'text-red-500'}
-          subtitle={data.gateway.service}
+          icon={data.gateway.reachable ? CheckCircle : data.gateway.service?.includes('activating') ? RefreshCw : XCircle}
+          color={data.gateway.reachable ? 'text-emerald-500' : data.gateway.service?.includes('activating') ? 'text-amber-500' : 'text-red-500'}
+          subtitle={data.gateway.reachable ? 'Operacional' : data.gateway.service?.includes('activating') ? 'A iniciar...' : 'Verificar serviço'}
         />
         
         <SectionCard 
