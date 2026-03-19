@@ -3,6 +3,25 @@ import { execSync } from 'child_process';
 
 export const dynamic = 'force-dynamic';
 
+// Helper to run gog commands
+function runGogCommand(cmd: string): { success: boolean; data?: any; error?: string } {
+  try {
+    const fullCmd = `GOG_KEYRING_PASSWORD="filipe" GOG_ACCOUNT=bedinbraga1@gmail.com ${cmd}`;
+    console.log('Running gog command:', fullCmd);
+    
+    const result = execSync(fullCmd, { 
+      encoding: 'utf-8', 
+      timeout: 15000,
+      env: { ...process.env, HOME: '/home/ubuntu' }
+    });
+    
+    return { success: true, data: result };
+  } catch (e: any) {
+    console.error('Gog command failed:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -95,6 +114,113 @@ export async function GET(request: NextRequest) {
         configured: false,
         events: [],
       },
+      { status: 500 }
+    );
+  }
+}
+
+// Create a new calendar event
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { title, description, start, end, location, calendarId = 'primary' } = body;
+
+    if (!title || !start) {
+      return NextResponse.json(
+        { error: 'Title and start time are required' },
+        { status: 400 }
+      );
+    }
+
+    // Format for gog calendar add command
+    // gog calendar add "Meeting" --when "2026-03-19T10:00:00" --description "Team sync" --location "Office"
+    let cmd = `gog calendar add "${title.replace(/"/g, '\\"')}" --when "${start}"`;
+    
+    if (description) {
+      cmd += ` --description "${description.replace(/"/g, '\\"')}"`;
+    }
+    
+    if (location) {
+      cmd += ` --location "${location.replace(/"/g, '\\"')}"`;
+    }
+    
+    if (end) {
+      // Note: gog calendar add doesn't have --end parameter, duration is implied
+      // We'll just use start for now
+      console.log('End time provided but gog calendar add only supports start time');
+    }
+
+    const result = runGogCommand(cmd);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: `Failed to create event: ${result.error}` },
+        { status: 500 }
+      );
+    }
+
+    // The gog command outputs JSON with the created event
+    let eventId = 'unknown';
+    try {
+      const output = result.data;
+      if (output && output.trim()) {
+        const data = JSON.parse(output);
+        eventId = data.id || 'unknown';
+      }
+    } catch (e) {
+      // If not JSON, try to extract event ID from text output
+      const match = result.data?.match(/Event created: (.+)/);
+      if (match) eventId = match[1];
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Event created successfully',
+      eventId,
+    });
+  } catch (error: any) {
+    console.error('Calendar POST error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to create event' },
+      { status: 500 }
+    );
+  }
+}
+
+// Delete a calendar event
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get('eventId');
+    const calendarId = searchParams.get('calendarId') || 'primary';
+
+    if (!eventId) {
+      return NextResponse.json(
+        { error: 'Event ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // gog calendar delete <calendarId> <eventId>
+    const cmd = `gog calendar delete "${calendarId}" "${eventId}"`;
+    
+    const result = runGogCommand(cmd);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: `Failed to delete event: ${result.error}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Event deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('Calendar DELETE error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete event' },
       { status: 500 }
     );
   }
