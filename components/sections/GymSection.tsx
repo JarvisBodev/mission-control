@@ -20,7 +20,7 @@ const SectionCard = ({ label, value, unit, icon: Icon, color }: any) => (
 const GymSection = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<number>>(new Set([0]));
+  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetch('/api/gym/workouts')
@@ -96,6 +96,16 @@ const GymSection = () => {
                   {workout.prNote && (
                     <div className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
                       🏆 PR
+                    </div>
+                  )}
+                  {workout.statusNote && (
+                    <div className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                      📝 {workout.statusNote}
+                    </div>
+                  )}
+                  {workout.incomplete && (
+                    <div className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                      ⚠️ Incompleto
                     </div>
                   )}
                 </div>

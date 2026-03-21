@@ -7,6 +7,61 @@ export async function GET() {
     // Real workouts from Discord Iron channel (parsed manually for accuracy)
     const workouts = [
       {
+        date: '2026-03-19',
+        muscleGroup: 'Costas & Bíceps',
+        prNote: '🏆 2x PR! Pulley Frente 64kg (anterior 59kg) + Rosca Máquina 24kg (anterior 18kg)',
+        exercises: [
+          {
+            name: 'Pulldown barra fixa',
+            sets: ['12 x 25kg', '12 x 30kg', '12 x 35kg', '12 x 40kg']
+          },
+          {
+            name: '🏆 Pulley frente barra aberta',
+            sets: ['10 x 40kg', '10 x 48kg', '10 x 56kg', '10 x 64kg * ajuda últimas 5 (PR!)']
+          },
+          {
+            name: 'Remada unilateral máquina',
+            sets: ['10 x 20kg cada lado', '10 x 25kg cada lado', '10 x 30kg cada lado', '10 x 30kg cada lado']
+          },
+          {
+            name: 'Remada curvada barra reta + rosca haltere alternada',
+            sets: ['10 x 20kg + 10 x 10kg cada braço', '10 x 25kg + 10 x 10kg cada braço', '10 x 25kg + 10 x 12.5kg cada braço']
+          },
+          {
+            name: '🏆 Rosca na máquina + pulley frontal barra fechada',
+            sets: ['10 x 18kg + 10 x 40kg', '10 x 24kg + 10 x 40kg (PR!)', '10 x 24kg + 10 x 48kg', '10 x 24kg + 10 x 48kg']
+          }
+        ]
+      },
+      {
+        date: '2026-03-17',
+        muscleGroup: 'Peito & Ombros',
+        prNote: null,
+        statusNote: 'Gripado e 4h de sono',
+        exercises: [
+          {
+            name: 'Incline upper chest máquina',
+            sets: ['12 x 20kg cada lado', '12 x 25kg cada lado', '12 x 30kg cada lado', '10 x 35kg cada lado']
+          },
+          {
+            name: 'Bench press máquina',
+            sets: ['12 x 25kg cada lado', '12 x 25kg cada lado', '12 x 30kg cada lado']
+          },
+          {
+            name: 'Crucifixo com halteres',
+            sets: ['12 x 15kg cada lado', '12 x 17.5kg cada lado', '12 x 17.5kg cada lado']
+          },
+          {
+            name: 'Crossover polia alta + elevação lateral c/ halteres',
+            sets: ['12 x 20kg cada lado + 12 x 6kg cada lado', '12 x 20kg cada lado + 12 x 6kg cada lado', '12 x 20kg cada lado + 12 x 6kg cada lado']
+          },
+          {
+            name: 'Elevação frontal c/ halteres + shoulder press máquina',
+            sets: ['12 x 6kg cada lado + 12 x 15kg cada lado', '12 x 6kg cada lado + 12 x 20kg cada lado', '12 x 6kg cada lado + 12 x 20kg cada lado']
+          }
+        ]
+      },
+      {
         date: '2026-03-13',
         muscleGroup: 'Ombros',
         prNote: null,
@@ -39,8 +94,8 @@ export async function GET() {
         prNote: '🏆 PR Belt Squat 60kg/lado',
         exercises: [
           {
-            name: 'Belt squat',
-            sets: ['10 x 40kg cada lado', '10 x 50kg cada lado', '10 x 60kg cada lado', '10 x 60kg cada lado']
+            name: '🏆 Belt squat',
+            sets: ['10 x 40kg cada lado', '10 x 50kg cada lado', '10 x 60kg cada lado (PR!)', '10 x 60kg cada lado']
           },
           {
             name: 'Flexora',
@@ -70,8 +125,8 @@ export async function GET() {
             sets: ['12 x 25kg + 12 x 20kg', '12 x 30kg + 12 x 25kg', '12 x 35kg + 12 x 30kg', '10 x 35kg + 10 x 30kg']
           },
           {
-            name: 'Pulley frente aberto',
-            sets: ['12 x 40kg', '10 x 48kg', '10 x 56kg', '10 x 59kg']
+            name: '🏆 Pulley frente aberto',
+            sets: ['12 x 40kg', '10 x 48kg', '10 x 56kg', '10 x 59kg (PR!)']
           },
           {
             name: 'Remada baixa com halteres',
@@ -193,8 +248,55 @@ export async function GET() {
         prNote: '🏆 PR Pulley Fechado 64kg',
         exercises: [
           {
-            name: 'Pulley fechado',
-            sets: ['12 x 40kg', '10 x 48kg', '10 x 56kg', '10 x 64kg']
+            name: 'Barra Fixa (Elevações)',
+            sets: ['10 reps c/ ajuda', '10 reps c/ ajuda', '10 reps c/ ajuda', '10 reps c/ ajuda']
+          },
+          {
+            name: 'Superset Pulldown Corda + Remada Curvada Barra W',
+            sets: ['12 x 30kg + 12 x 18.5kg', '12 x 30kg + 12 x 18.5kg', '12 x 33.5kg + 12 x 20kg']
+          },
+          {
+            name: '🏆 Pulley Fechado',
+            sets: ['10 x 40kg', '10 x 48kg', '10 x 56kg (ajuda últimas 2)', '10 x 64kg (ajuda últimas 5) - PR!']
+          },
+          {
+            name: 'Remada Baixa Unilateral Máquina',
+            sets: ['10 x 20kg', '10 x 25kg', '10 x 27kg']
+          },
+          {
+            name: 'Remada Baixa Barra Aberta (Polia)',
+            sets: ['12 x 30kg', '12 x 45kg', '10 x 50kg', '10 x 55kg']
+          }
+        ]
+      },
+      {
+        date: '2026-03-02',
+        muscleGroup: 'Peito & Tríceps',
+        prNote: '🏆 PR Supino Inclinado 37.5kg',
+        exercises: [
+          {
+            name: '🏆 Supino Inclinado Máquina',
+            sets: ['15 x 20kg (warmup)', '12 x 30kg', '10 x 35kg', '10 x 37.5kg (PR!)']
+          },
+          {
+            name: 'Supino Máquina',
+            sets: ['12 x 25kg', '10 x 30kg', '10 x 32.5kg', '10 x 35kg']
+          },
+          {
+            name: 'Crucifixo Reto',
+            sets: ['12 x 17.5kg', '12 x 20kg', '12 x 20kg', '10 x 20kg']
+          },
+          {
+            name: 'Cable Flies Superior',
+            sets: ['15 x 15kg', '10 x 20kg', '12 x 20kg', '12 x 20kg']
+          },
+          {
+            name: 'Tríceps Polia Unilateral',
+            sets: ['10 x 10kg', '10 x 10kg', '10 x 10kg', '10 x 10kg']
+          },
+          {
+            name: 'Superset Tríceps Barra + Corda',
+            sets: ['10 x 30kg + 10 x 20kg', '10 x 30kg + 10 x 20kg', '10 x 30kg + 10 x 20kg', '10 x 30kg + 10 x 20kg']
           }
         ]
       }
